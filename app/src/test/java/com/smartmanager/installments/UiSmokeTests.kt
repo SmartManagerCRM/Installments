@@ -75,7 +75,7 @@ abstract class UiBase {
         val l = container.ledger; val c = container.customers
         val late = c.save(com.smartmanager.installments.data.repo.CustomerInput(null, "أحمد بن علي", "20111222", null, "تونس", null, ""))
         val ok = c.save(com.smartmanager.installments.data.repo.CustomerInput(null, "Élodie Martin", "55666777", null, "", null, ""))
-        fun contract(cust: String, first: java.time.LocalDate) = l.createContract(
+        suspend fun contract(cust: String, first: java.time.LocalDate) = l.createContract(
             com.smartmanager.installments.data.repo.NewContract(cust, first.minusMonths(1), "TND", listOf(com.smartmanager.installments.data.repo.NewItem(null, "ثلاجة Samsung", 1, 2_400_000)), 0, 400_000,
                 com.smartmanager.installments.core.schedule.Frequency.MONTHLY, com.smartmanager.installments.core.schedule.ScheduleGenerator.generate(2_000_000, 10, com.smartmanager.installments.core.schedule.Frequency.MONTHLY, first, 1000), "", "", true),
         )
@@ -170,6 +170,6 @@ class UiTabletTests : UiBase() {
         rule.onNodeWithText("Customers").performClick(); rule.waitForIdle()
         rule.onNodeWithText("Select a customer to see the details").assertIsDisplayed() // two-pane placeholder
         shot("customers-tablet")
-        assertEquals(true, rule.onNodeWithText("Élodie Martin").getBoundsInRoot().width > 0.dp)
+        rule.onNodeWithText("Élodie Martin").assertIsDisplayed()
     }
 }
