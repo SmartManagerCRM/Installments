@@ -283,13 +283,15 @@ fun StatusBadge(status: InstallmentStatus) {
 @Composable
 private fun SummaryCard(m: Modifier, title: String, value: String, sub: String, color: Color, soft: Color, icon: ImageVector, onClick: () -> Unit) {
     SMCard(m, onClick = onClick, container = soft.copy(alpha = 0.55f)) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(44.dp).background(Color.White, CircleShape), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(24.dp)) }
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-                Text(title, style = MaterialTheme.typography.bodyMedium, color = Brand.Navy, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                Text(value, style = MaterialTheme.typography.titleLarge, color = color, maxLines = 1)
-                Text(sub, style = MaterialTheme.typography.bodySmall, color = Brand.Muted, maxLines = 1)
+        Column(Modifier.padding(14.dp)) {
+            // icon + title share the first line; the value gets the full card width so amounts with a currency symbol never clip
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(36.dp).background(Color.White, CircleShape), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(20.dp)) }
+                Text(title, Modifier.weight(1f).padding(horizontal = 8.dp), style = MaterialTheme.typography.bodyMedium, color = Brand.Navy, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
+            Spacer(Modifier.height(6.dp))
+            Text(value, style = MaterialTheme.typography.titleLarge, color = color, maxLines = 1, softWrap = false)
+            Text(sub, style = MaterialTheme.typography.bodySmall, color = Brand.Muted, maxLines = 1)
         }
     }
 }
