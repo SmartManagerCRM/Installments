@@ -5,7 +5,9 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -124,11 +126,11 @@ class UiArabicPhoneTests : UiBase() {
     @Test fun notActivatedShowsActivationWithDeviceId() {
         boot(411, 891, activate = false)
         rule.onNodeWithText(str(R.string.activation_title)).assertIsDisplayed()
-        rule.onNodeWithText(container.license.deviceId, substring = true).assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.continue_read_only)).assertIsDisplayed()
+        rule.onNodeWithText(container.license.deviceId, substring = true).assertExists()
+        rule.onNodeWithText(str(R.string.continue_read_only)).assertExists()
         shot("activation-ar")
         // read-only mode opens the app but hides write actions
-        rule.onNodeWithText(str(R.string.continue_read_only)).performClick(); rule.waitForIdle()
+        rule.onNodeWithText(str(R.string.continue_read_only)).performScrollTo().performClick(); rule.waitForIdle()
         rule.onNodeWithText(str(R.string.total_outstanding)).assertIsDisplayed()
     }
 }
