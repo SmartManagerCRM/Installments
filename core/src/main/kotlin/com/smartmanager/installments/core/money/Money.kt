@@ -41,7 +41,7 @@ object MoneyMath {
      * (No silent rounding of user input.)
      */
     fun parse(input: String, decimals: Int): Long? {
-        val s = normalizeDigits(input).filter { !it.isWhitespace() && it != ' ' && it != ' ' }
+        val s = normalizeDigits(input).filter { !it.isWhitespace() && it != '\u00A0' && it != '\u202F' }
         if (s.isEmpty()) return null
         if (!s.all { it.isDigit() || it == '.' || it == ',' }) return null
         val dots = s.count { it == '.' }

@@ -9,15 +9,15 @@ import java.time.LocalDate
 class FormattersTests {
     @Test fun frenchUsesNarrowSpaceGroupingAndCommaDecimal() {
         val f = Formatters("fr", "dd/MM/yyyy", "TND")
-        assertEquals("2 400,000", f.amount(2_400_000))
-        assertEquals("⁦2 400,000 TND⁩", f.money(2_400_000))
+        assertEquals("2\u202F400,000", f.amount(2_400_000))
+        assertEquals("\u20662\u202F400,000 TND\u2069", f.money(2_400_000))
     }
 
     @Test fun arabicAndEnglishKeepWesternDigitsAndIsolateMoney() {
         for (lang in listOf("ar", "en")) {
             val f = Formatters(lang, "dd/MM/yyyy", "TND")
             assertEquals("2,400.000", f.amount(2_400_000))
-            assertEquals("⁦2,400.000 TND⁩", f.money(2_400_000)) // isolates keep "2,400.000 TND" in one LTR run inside RTL text
+            assertEquals("\u20662,400.000 TND\u2069", f.money(2_400_000)) // isolates keep "2,400.000 TND" in one LTR run inside RTL text
             assertEquals("15/03/2026", f.date(LocalDate.of(2026, 3, 15)))
         }
     }

@@ -19,13 +19,13 @@ class Formatters(val language: String, val dateFormat: String, val defaultCurren
     private val dateFmt: DateTimeFormatter = DateTimeFormatter.ofPattern(safePattern, locale)
     private val dateTimeFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("$safePattern HH:mm", locale)
 
-    private val group: Char? = if (language.startsWith("fr")) ' ' else ','
+    private val group: Char? = if (language.startsWith("fr")) '\u202F' else ','
     private val decimal: Char = if (language.startsWith("fr")) ',' else '.'
 
     fun amount(minor: Long, currency: String = defaultCurrency): String =
         MoneyMath.format(minor, Currencies.of(currency).decimals, group, decimal)
 
-    fun money(minor: Long, currency: String = defaultCurrency): String = "⁦${amount(minor, currency)} $currency⁩"
+    fun money(minor: Long, currency: String = defaultCurrency): String = "\u2066${amount(minor, currency)} $currency\u2069"
 
     /** Editable text: no grouping, '.' decimal. */
     fun editable(minor: Long, currency: String = defaultCurrency): String = MoneyMath.format(minor, Currencies.of(currency).decimals, null, '.')
