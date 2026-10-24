@@ -73,7 +73,7 @@ class ItemDraft(val key: Long = System.nanoTime(), val productId: String? = null
     var price by mutableStateOf(price)
 }
 
-class WizardVm(val c: AppContainer, preCustomerId: String?, val draftId: String?) : ViewModel() {
+class WizardVm(val c: AppContainer, val preCustomerId: String?, val draftId: String?) : ViewModel() {
     var step by mutableStateOf(0)
     var currency by mutableStateOf("TND")
     var customer by mutableStateOf<CustomerEntity?>(null)

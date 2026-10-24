@@ -122,6 +122,10 @@ fun CustomerDetailScreen(
         val p = s
         val cu = p?.customer
         if (p == null || cu == null) return@Column
+        val active = p.installments.filter { r -> r.b.contractStatus == Status.ACTIVE && r.b.state == Status.ACTIVE && r.b.outstandingMinor > 0 }
+        val outstanding = active.sumOf { it.b.outstandingMinor }
+        val overdue = active.filter { it.b.dueDate < p.today.toEpochDay() }.sumOf { it.b.outstandingMinor }
+        val cur = active.firstOrNull()?.b?.currency ?: fmt.defaultCurrency
         ContentColumn {
             ErrorBanner(errorText(error))
             SMCard(Modifier.fillMaxWidth()) {
@@ -135,10 +139,6 @@ fun CustomerDetailScreen(
                     KeyValueRow(stringResource(R.string.created), fmt.dateTime(cu.createdAt))
                 }
             }
-            val active = p.installments.filter { r -> r.b.contractStatus == Status.ACTIVE && r.b.state == Status.ACTIVE && r.b.outstandingMinor > 0 }
-            val outstanding = active.sumOf { it.b.outstandingMinor }
-            val overdue = active.filter { it.b.dueDate < p.today.toEpochDay() }.sumOf { it.b.outstandingMinor }
-            val cur = active.firstOrNull()?.b?.currency ?: fmt.defaultCurrency
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SMCard(Modifier.weight(1f)) { Column(Modifier.padding(14.dp)) { Text(stringResource(R.string.outstanding_balance), color = Brand.Muted, style = MaterialTheme.typography.bodySmall); Text(fmt.money(outstanding, cur), style = MaterialTheme.typography.titleLarge, color = Brand.Navy) } }
                 SMCard(Modifier.weight(1f)) { Column(Modifier.padding(14.dp)) { Text(stringResource(R.string.overdue_balance), color = Brand.Muted, style = MaterialTheme.typography.bodySmall); Text(fmt.money(overdue, cur), style = MaterialTheme.typography.titleLarge, color = if (overdue > 0) Brand.Red else Brand.Green) } }

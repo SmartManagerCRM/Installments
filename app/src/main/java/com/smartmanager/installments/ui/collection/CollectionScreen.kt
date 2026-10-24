@@ -134,7 +134,7 @@ fun CollectionScreen(onBack: () -> Unit, onOpenCustomer: (String) -> Unit) {
                         }
                         if (i.overdueMinor > 0) Text(stringResource(R.string.overdue) + " " + fmt.money(i.overdueMinor, st.currency) + " · " + stringResource(R.string.days_overdue, i.oldestOverdueDays.toInt()), color = Brand.Red, style = MaterialTheme.typography.bodySmall)
                         if (i.dueTodayMinor > 0) Text(stringResource(R.string.due_today) + " " + fmt.money(i.dueTodayMinor, st.currency), color = Brand.Orange, style = MaterialTheme.typography.bodySmall)
-                        if (i.openPromiseDateEpochDay != null) Text(stringResource(R.string.promised_on, fmt.money(i.openPromiseAmountMinor ?: 0, st.currency), fmt.date(i.openPromiseDateEpochDay)), color = Brand.Blue, style = MaterialTheme.typography.bodySmall)
+                        i.openPromiseDateEpochDay?.let { pd -> Text(stringResource(R.string.promised_on, fmt.money(i.openPromiseAmountMinor ?: 0, st.currency), fmt.date(pd)), color = Brand.Blue, style = MaterialTheme.typography.bodySmall) }
                         Text("➜ " + stringResource(actionLabel(e.action)), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = Brand.Navy)
                         Row {
                             IconButton(onClick = {
