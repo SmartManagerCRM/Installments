@@ -118,6 +118,9 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.paging.compose)
 
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     testImplementation(libs.junit4)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

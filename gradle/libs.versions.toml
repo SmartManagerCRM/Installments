@@ -43,6 +43,8 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
+androidx-compose-ui-test = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 junit4 = { module = "junit:junit", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junitJupiter" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
