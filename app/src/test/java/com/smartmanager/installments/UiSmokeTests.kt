@@ -130,7 +130,9 @@ class UiArabicPhoneTests : UiBase() {
         shot("activation-ar")
         // read-only mode opens the app but hides write actions
         rule.onNodeWithText(str(R.string.continue_read_only)).performScrollTo().performClick(); rule.waitForIdle()
-        rule.onNodeWithText(str(R.string.total_outstanding)).assertIsDisplayed()
+        val title = str(R.string.total_outstanding)
+        rule.waitUntil(10_000) { rule.onAllNodesWithText(title).fetchSemanticsNodes().isNotEmpty() } // Room flows load asynchronously
+        rule.onNodeWithText(title).assertIsDisplayed()
     }
 }
 
