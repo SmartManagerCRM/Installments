@@ -15,9 +15,9 @@ import java.util.Locale
  */
 class Formatters(val language: String, val dateFormat: String, val defaultCurrency: String) {
     private val locale: Locale = Locale.forLanguageTag(language)
-    private val dateFmt: DateTimeFormatter = runCatching { DateTimeFormatter.ofPattern(dateFormat, locale) }
-        .getOrElse { DateTimeFormatter.ofPattern("dd/MM/yyyy", locale) }
-    private val dateTimeFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("$dateFormat HH:mm", locale)
+    private val safePattern: String = runCatching { DateTimeFormatter.ofPattern(dateFormat, locale); dateFormat }.getOrDefault("dd/MM/yyyy")
+    private val dateFmt: DateTimeFormatter = DateTimeFormatter.ofPattern(safePattern, locale)
+    private val dateTimeFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("$safePattern HH:mm", locale)
 
     private val group: Char? = if (language.startsWith("fr")) ' ' else ','
     private val decimal: Char = if (language.startsWith("fr")) ',' else '.'
