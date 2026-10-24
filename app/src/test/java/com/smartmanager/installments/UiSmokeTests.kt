@@ -141,7 +141,7 @@ class UiFrenchPhoneTests : UiBase() {
     @Test fun dashboardAndSettingsInFrench() {
         boot(411, 891)
         rule.onNodeWithText("Total restant dû").assertIsDisplayed()
-        rule.onNodeWithText("Actions rapides").assertIsDisplayed()
+        rule.onNodeWithText("Nouveau contrat").assertExists()
         // LTR: Home is left of Reports
         assertTrue(rule.onNodeWithText("Accueil").getBoundsInRoot().left < rule.onNodeWithText("Rapports").getBoundsInRoot().left)
         shot("dashboard-fr")
