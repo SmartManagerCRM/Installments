@@ -25,7 +25,25 @@ class Formatters(val language: String, val dateFormat: String, val defaultCurren
     fun amount(minor: Long, currency: String = defaultCurrency): String =
         MoneyMath.format(minor, Currencies.of(currency).decimals, group, decimal)
 
-    fun money(minor: Long, currency: String = defaultCurrency): String = "\u2066${amount(minor, currency)} $currency\u2069"
+    private val arabicSymbols = mapOf(
+        "TND" to "د.ت", "SAR" to "ر.س", "DZD" to "د.ج", "MAD" to "د.م", "EGP" to "ج.م", "AED" to "د.إ",
+        "QAR" to "ر.ق", "KWD" to "د.ك", "LYD" to "د.ل", "JOD" to "د.أ", "EUR" to "€", "USD" to "$",
+    )
+
+    /** Display symbol: Arabic UI uses the Arabic symbol (د.ت), French uses DT for the dinar, otherwise the ISO code. */
+    fun symbol(currency: String): String = when {
+        language.startsWith("ar") -> arabicSymbols[currency] ?: currency
+        language.startsWith("fr") && currency == "TND" -> "DT"
+        currency == "EUR" -> "\u20AC"
+        currency == "USD" -> "$"
+        else -> currency
+    }
+
+    /** Amount + symbol wrapped in a directional isolate so it is never reordered inside surrounding text. */
+    fun money(minor: Long, currency: String = defaultCurrency): String {
+        val open = if (language.startsWith("ar")) '\u2067' else '\u2066'
+        return "$open${amount(minor, currency)}\u00A0${symbol(currency)}\u2069"
+    }
 
     /** Editable text: no grouping, '.' decimal. */
     fun editable(minor: Long, currency: String = defaultCurrency): String = MoneyMath.format(minor, Currencies.of(currency).decimals, null, '.')

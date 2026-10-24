@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Decorative coin stack for the dashboard hero card -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp" android:height="72dp" android:viewportWidth="72" android:viewportHeight="72">
+    <path android:fillColor="#E59A00" android:pathData="M10,48 a22,8 0 1,0 44,0 a22,8 0 1,0 -44,0 M10,48 v8 a22,8 0 0,0 44,0 v-8 z" />
+    <path android:fillColor="#FFC83D" android:pathData="M10,40 a22,8 0 1,0 44,0 a22,8 0 1,0 -44,0 z" />
+    <path android:fillColor="#E59A00" android:pathData="M10,40 v8 a22,8 0 0,0 44,0 v-8 z" />
+    <path android:fillColor="#FFD966" android:pathData="M10,32 a22,8 0 1,0 44,0 a22,8 0 1,0 -44,0 z" />
+    <path android:fillColor="#E59A00" android:pathData="M10,32 v8 a22,8 0 0,0 44,0 v-8 z" />
+    <path android:fillColor="#FFE9A0" android:pathData="M12,24 a20,7 0 1,0 40,0 a20,7 0 1,0 -40,0 z" />
+    <path android:fillColor="#E59A00" android:pathData="M12,24 v8 a20,7 0 0,0 40,0 v-8 z" />
+    <path android:fillColor="#FFD966" android:pathData="M18,18 a14,5 0 1,0 28,0 a14,5 0 1,0 -28,0 z" />
+</vector>

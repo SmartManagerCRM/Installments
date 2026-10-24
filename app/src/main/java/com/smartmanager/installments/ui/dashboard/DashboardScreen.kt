@@ -24,7 +24,9 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
@@ -122,13 +124,16 @@ fun DashboardScreen(
     val remind = rememberReminderLauncher()
 
     ContentColumn(maxWidth = 960) {
-        // Header: logo, notification indicator, menu
+        // Header: menu | logo + name | notification indicator (mirrors automatically in RTL)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.ic_logo), null, Modifier.size(44.dp))
-            Spacer(Modifier.size(10.dp))
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium, color = Brand.Navy)
-                if (settings.businessName.isNotBlank()) Text(settings.businessName, style = MaterialTheme.typography.bodySmall, color = Brand.Muted)
+            IconButton(onClick = onOpenSettings) { Icon(Icons.Filled.Menu, stringResource(R.string.settings), tint = Brand.Navy) }
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Image(painterResource(R.drawable.ic_logo), null, Modifier.size(44.dp))
+                Spacer(Modifier.size(8.dp))
+                Column {
+                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall, color = Brand.Navy, maxLines = 1)
+                    if (settings.businessName.isNotBlank()) Text(settings.businessName, style = MaterialTheme.typography.bodySmall, color = Brand.Muted, maxLines = 1)
+                }
             }
             val alerts = (s?.dueToday?.count ?: 0) + (s?.overdue?.count ?: 0)
             IconButton(onClick = onCollection) {
@@ -136,38 +141,39 @@ fun DashboardScreen(
                     Icon(Icons.Filled.Notifications, stringResource(R.string.collection_center), tint = Brand.Navy)
                 }
             }
-            IconButton(onClick = onOpenSettings) { Icon(Icons.Filled.Menu, stringResource(R.string.settings), tint = Brand.Navy) }
         }
 
         val st = s
         if (st == null) {
             Spacer(Modifier.height(200.dp))
         } else {
-            // Total outstanding hero card
+            // Total outstanding hero card (tap: outstanding report is reachable from Reports; here it opens the collection center)
             Box(
-                Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Brand.Navy, Color(0xFF14408A))), RoundedCornerShape(22.dp)).padding(20.dp),
+                Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Brand.Navy, Color(0xFF1A4C9C))), RoundedCornerShape(22.dp))
+                    .clickable(onClick = onCollection).padding(20.dp),
             ) {
-                Column {
-                    Text(stringResource(R.string.total_outstanding), color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.titleSmall)
-                    Spacer(Modifier.height(4.dp))
-                    Text(fmt.money(st.outstanding, st.currency), color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        stringResource(R.string.across_contracts, st.activeContracts), color = Color.White.copy(alpha = 0.75f),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.total_outstanding), color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(4.dp))
+                        Text(fmt.money(st.outstanding, st.currency), color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Text(stringResource(R.string.across_contracts, st.activeContracts), color = Color.White.copy(alpha = 0.75f), style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Image(painterResource(R.drawable.ic_coins), null, Modifier.size(72.dp))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Color.White)
                 }
             }
             if (st.otherCurrencyContracts > 0) {
                 Text(stringResource(R.string.other_currency_note, st.otherCurrencyContracts), style = MaterialTheme.typography.bodySmall, color = Brand.Muted)
             }
 
-            // Summary cards (2x2 on phones, 4 across on tablets)
+            // Summary cards: overdue and due-today first (what needs attention), then contracts and customers. 2x2 on phones, 4 across on tablets.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val cards = listOf<@Composable (Modifier) -> Unit>(
-                    { m -> SummaryCard(m, stringResource(R.string.due_today), fmt.money(st.dueToday.amountMinor, st.currency), stringResource(R.string.n_customers, st.dueToday.count), Brand.Blue, Brand.BlueSoft, Icons.Filled.AccountBalanceWallet, onDueTodayList) },
                     { m -> SummaryCard(m, stringResource(R.string.overdue), fmt.money(st.overdue.amountMinor, st.currency), stringResource(R.string.n_customers, st.overdue.count), Brand.Red, Brand.RedSoft, Icons.Filled.Warning, onOverdueList) },
-                    { m -> SummaryCard(m, stringResource(R.string.total_customers), st.customers.toString(), stringResource(R.string.registered), Brand.Navy, Brand.BlueSoft, Icons.Filled.PersonAdd, onCustomersList) },
-                    { m -> SummaryCard(m, stringResource(R.string.active_contracts), st.activeContracts.toString(), stringResource(R.string.installment_plans), Brand.Green, Brand.GreenSoft, Icons.Filled.Description, onContractsList) },
+                    { m -> SummaryCard(m, stringResource(R.string.due_today), fmt.money(st.dueToday.amountMinor, st.currency), stringResource(R.string.n_customers, st.dueToday.count), Brand.Green, Brand.GreenSoft, Icons.Filled.CalendarMonth, onDueTodayList) },
+                    { m -> SummaryCard(m, stringResource(R.string.active_contracts), st.activeContracts.toString(), stringResource(R.string.installment_plans), Brand.Purple, Brand.PurpleSoft, Icons.Filled.Description, onContractsList) },
+                    { m -> SummaryCard(m, stringResource(R.string.total_customers), st.customers.toString(), stringResource(R.string.registered), Brand.Blue, Brand.BlueSoft, Icons.Filled.People, onCustomersList) },
                 )
                 val perRow = if (maxWidth > 640.dp) 4 else 2
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -177,59 +183,55 @@ fun DashboardScreen(
                 }
             }
 
-            // Quick actions
-            SectionTitle(stringResource(R.string.quick_actions))
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val actions = listOf<@Composable (Modifier) -> Unit>(
-                    { m -> QuickAction(m, stringResource(R.string.add_customer), Icons.Filled.PersonAdd, Brand.Blue, !readOnly, onAddCustomer) },
-                    { m -> QuickAction(m, stringResource(R.string.new_contract), Icons.Filled.Description, Brand.Navy, !readOnly, onNewContract) },
-                    { m -> QuickAction(m, stringResource(R.string.record_payment), Icons.Filled.AccountBalanceWallet, Brand.Orange, !readOnly, onRecordPayment) },
-                    { m -> QuickAction(m, stringResource(R.string.send_reminder), Icons.AutoMirrored.Filled.Send, Brand.Green, true, onCollection) },
-                )
-                val perRow = if (maxWidth > 640.dp) 4 else 2
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    actions.chunked(perRow).forEach { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { row.forEach { it(Modifier.weight(1f)) } }
-                    }
-                }
-            }
-
             // Recent overdue customers
-            SectionTitle(stringResource(R.string.recent_overdue_customers)) {
-                if (st.overdueCustomers.isNotEmpty()) Text(stringResource(R.string.view_all), color = Brand.Blue, modifier = Modifier.clickable { onOverdueList() }, fontWeight = FontWeight.SemiBold)
-            }
             SMCard(Modifier.fillMaxWidth()) {
-                if (st.overdueCustomers.isEmpty()) EmptyState(stringResource(R.string.no_overdue))
-                else Column {
+                Column(Modifier.padding(vertical = 8.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.recent_overdue_customers), style = MaterialTheme.typography.titleMedium, color = Brand.Navy, modifier = Modifier.weight(1f))
+                        if (st.overdueCustomers.isNotEmpty()) Text(stringResource(R.string.view_all), color = Brand.Blue, modifier = Modifier.clickable { onOverdueList() }, fontWeight = FontWeight.SemiBold)
+                    }
+                    if (st.overdueCustomers.isEmpty()) EmptyState(stringResource(R.string.no_overdue))
                     st.overdueCustomers.forEachIndexed { i, r ->
                         val days = st.today.toEpochDay() - r.oldestDueDate
                         Row(
-                            Modifier.fillMaxWidth().clickable { onOpenCustomer(r.customerId) }.padding(horizontal = 14.dp, vertical = 12.dp),
+                            Modifier.fillMaxWidth().clickable { onOpenCustomer(r.customerId) }.padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(Modifier.weight(1f)) {
+                            Avatar(r.customerName)
+                            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                                 Text(r.customerName, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                                Text(stringResource(R.string.days_overdue, days.toInt()), color = Brand.Red, style = MaterialTheme.typography.bodySmall)
+                                Text(fmt.money(r.overdueMinor, st.currency), color = Brand.Red, fontWeight = FontWeight.Bold)
                             }
-                            Text(fmt.money(r.overdueMinor, st.currency), color = Brand.Red, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.days_overdue, days.toInt()), color = Brand.Red, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                             IconButton(onClick = {
                                 remind(ReminderRequest(r.customerId, r.customerName, r.phone, null, ReminderType.OVERDUE, r.overdueMinor, st.currency, r.oldestDueDate))
-                            }) { Icon(Icons.Filled.Chat, stringResource(R.string.whatsapp_reminder), tint = Brand.Green) }
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Brand.Muted)
+                            }) {
+                                Box(Modifier.size(40.dp).background(Brand.GreenSoft, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Filled.Chat, stringResource(R.string.whatsapp_reminder), tint = Brand.Green)
+                                }
+                            }
                         }
-                        if (i < st.overdueCustomers.lastIndex) androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        if (i < st.overdueCustomers.lastIndex) androidx.compose.material3.HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
             }
 
+            // Quick actions: one row of four cards with a tinted icon each (orange = main call to action)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                QuickAction(Modifier.weight(1f), stringResource(R.string.add_customer), Icons.Filled.PersonAdd, Brand.Green, Brand.GreenSoft, !readOnly, onAddCustomer)
+                QuickAction(Modifier.weight(1f), stringResource(R.string.new_contract), Icons.Filled.Description, Brand.Blue, Brand.BlueSoft, !readOnly, onNewContract)
+                QuickAction(Modifier.weight(1f), stringResource(R.string.record_payment), Icons.Filled.AccountBalanceWallet, Brand.Orange, Brand.OrangeSoft, !readOnly, onRecordPayment)
+                QuickAction(Modifier.weight(1f), stringResource(R.string.send_reminder), Icons.Filled.Chat, Brand.Purple, Brand.PurpleSoft, true, onCollection)
+            }
+
             // Upcoming payments
-            SectionTitle(stringResource(R.string.upcoming_payments))
             SMCard(Modifier.fillMaxWidth()) {
-                if (st.upcoming.isEmpty()) EmptyState(stringResource(R.string.no_upcoming))
-                else Column {
+                Column(Modifier.padding(vertical = 8.dp)) {
+                    Text(stringResource(R.string.upcoming_payments), style = MaterialTheme.typography.titleMedium, color = Brand.Navy, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    if (st.upcoming.isEmpty()) EmptyState(stringResource(R.string.no_upcoming))
                     st.upcoming.forEachIndexed { i, r ->
                         UpcomingRow(r, st.today, onClick = { onOpenPaymentFor(r.b.contractId) })
-                        if (i < st.upcoming.lastIndex) androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        if (i < st.upcoming.lastIndex) androidx.compose.material3.HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
             }
@@ -238,18 +240,29 @@ fun DashboardScreen(
 }
 
 @Composable
+private fun Avatar(name: String) {
+    Box(Modifier.size(44.dp).background(Brand.BlueSoft, CircleShape), contentAlignment = Alignment.Center) {
+        Text(name.trim().take(1).uppercase(), color = Brand.Blue, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
 private fun UpcomingRow(r: InstallmentRow, today: LocalDate, onClick: () -> Unit) {
     val fmt = LocalFmt.current
     val status = InstallmentStatusCalculator.status(LocalDate.ofEpochDay(r.b.dueDate), r.b.amountMinor, r.b.paidMinor, today)
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(40.dp).background(Brand.BlueSoft, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.CalendarMonth, null, tint = Brand.Blue, modifier = Modifier.size(22.dp))
+        }
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(r.customerName, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-            Text("${fmt.date(r.b.dueDate)} · ${r.b.contractNumber}", style = MaterialTheme.typography.bodySmall, color = Brand.Muted)
+            Text("${fmt.date(r.b.dueDate)} \u00B7 ${r.b.contractNumber}", style = MaterialTheme.typography.bodySmall, color = Brand.Muted)
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(fmt.money(r.b.outstandingMinor, r.b.currency), fontWeight = FontWeight.Bold)
             StatusBadge(status)
         }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Brand.Muted)
     }
 }
 
@@ -269,28 +282,27 @@ fun StatusBadge(status: InstallmentStatus) {
 
 @Composable
 private fun SummaryCard(m: Modifier, title: String, value: String, sub: String, color: Color, soft: Color, icon: ImageVector, onClick: () -> Unit) {
-    SMCard(m, onClick = onClick) {
-        Column(Modifier.padding(14.dp)) {
-            Box(Modifier.size(36.dp).background(soft, CircleShape), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(20.dp)) }
-            Spacer(Modifier.height(8.dp))
-            Text(title, style = MaterialTheme.typography.bodyMedium, color = Brand.Muted)
-            Text(value, style = MaterialTheme.typography.titleLarge, color = color, maxLines = 1)
-            Text(sub, style = MaterialTheme.typography.bodySmall, color = Brand.Muted)
+    SMCard(m, onClick = onClick, container = soft.copy(alpha = 0.55f)) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(44.dp).background(Color.White, CircleShape), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(24.dp)) }
+            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+                Text(title, style = MaterialTheme.typography.bodyMedium, color = Brand.Navy, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(value, style = MaterialTheme.typography.titleLarge, color = color, maxLines = 1)
+                Text(sub, style = MaterialTheme.typography.bodySmall, color = Brand.Muted, maxLines = 1)
+            }
         }
     }
 }
 
 @Composable
-private fun QuickAction(m: Modifier, label: String, icon: ImageVector, color: Color, enabled: Boolean, onClick: () -> Unit) {
-    Box(
-        m.height(84.dp).background(if (enabled) color else color.copy(alpha = 0.35f), RoundedCornerShape(18.dp))
-            .clickable(enabled = enabled, onClick = onClick).padding(10.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, null, tint = Color.White, modifier = Modifier.size(26.dp))
-            Spacer(Modifier.height(4.dp))
-            Text(label, color = Color.White, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+private fun QuickAction(m: Modifier, label: String, icon: ImageVector, color: Color, soft: Color, enabled: Boolean, onClick: () -> Unit) {
+    SMCard(m, onClick = if (enabled) onClick else null) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(48.dp).background(if (enabled) soft else Color(0xFFEEF1F6), CircleShape), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = if (enabled) color else Brand.Muted, modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Brand.Navy, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }

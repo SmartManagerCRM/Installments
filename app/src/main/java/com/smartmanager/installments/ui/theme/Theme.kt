@@ -25,6 +25,8 @@ object Brand {
     val RedSoft = Color(0xFFFCE8E9)
     val OrangeSoft = Color(0xFFFFF1DE)
     val Muted = Color(0xFF5B6B84)
+    val Purple = Color(0xFF7C4DFF)
+    val PurpleSoft = Color(0xFFEDE7FF)
 }
 
 private val Scheme = lightColorScheme(
