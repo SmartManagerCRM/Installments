@@ -75,7 +75,7 @@ android {
             isIncludeAndroidResources = true
             all {
                 it.testLogging {
-                    events("failed")
+                    events("started", "passed", "failed", "skipped")
                     exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
                     showCauses = true
                     showStackTraces = true

@@ -42,6 +42,7 @@ jobs:
       - name: Core (pure Kotlin) tests
         run: ./gradlew :core:test --stacktrace
       - name: App unit tests (Robolectric, in-memory Room)
+        timeout-minutes: 20
         run: ./gradlew :app:testDebugUnitTest --stacktrace
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
