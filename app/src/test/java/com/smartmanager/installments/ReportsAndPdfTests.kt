@@ -19,7 +19,8 @@ import org.robolectric.annotation.GraphicsMode
 import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
+// LEGACY graphics: Robolectric only backs android.graphics.pdf.PdfDocument there (NATIVE has no native PDF support)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
 @Config(sdk = [34], qualifiers = "ar-rTN")
 class ReportsAndPdfTests {
     private val env = Env()

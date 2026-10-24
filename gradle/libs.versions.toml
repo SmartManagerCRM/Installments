@@ -16,6 +16,7 @@ paging = "3.3.4"
 junit = "4.13.2"
 junitJupiter = "5.11.3"
 robolectric = "4.13"
+roborazzi = "1.30.1"
 androidxTest = "1.6.1"
 androidxJunit = "1.2.1"
 
@@ -45,6 +46,8 @@ androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 androidx-compose-ui-test = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
 junit4 = { module = "junit:junit", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junitJupiter" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }

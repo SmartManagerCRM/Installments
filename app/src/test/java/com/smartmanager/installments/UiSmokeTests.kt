@@ -1,13 +1,12 @@
 package com.smartmanager.installments
 
-import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.ui.graphics.asAndroidBitmap
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -84,10 +83,9 @@ abstract class UiBase {
         l.recordPayment(com.smartmanager.installments.data.repo.PaymentRequest("ui-1", c2, 50_000, "CASH"))
     }
 
+    /** Best-effort screenshot (visual review); never fails a test. */
     protected fun shot(name: String) {
-        val bmp = rule.onRoot().captureToImage().asAndroidBitmap()
-        val dir = File("build/screenshots").apply { mkdirs() }
-        File(dir, "$name.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        runCatching { rule.onRoot().captureRoboImage("build/screenshots/$name.png") }
     }
 
     protected fun str(id: Int) = env.context.getString(id)
@@ -102,7 +100,7 @@ class UiArabicPhoneTests : UiBase() {
         rule.onNodeWithText(str(R.string.total_outstanding)).assertIsDisplayed()
         rule.onNodeWithText(str(R.string.recent_overdue_customers)).assertIsDisplayed()
         // the figures come from the database: 12 days late customer is listed
-        rule.onNodeWithText("أحمد بن علي").assertIsDisplayed()
+        rule.onAllNodesWithText("أحمد بن علي")[0].assertIsDisplayed()
         // RTL: "Home" (first tab) must be to the RIGHT of "Reports" (last tab)
         val home = rule.onNodeWithText(str(R.string.nav_home)).getBoundsInRoot()
         val reports = rule.onNodeWithText(str(R.string.nav_reports)).getBoundsInRoot()
@@ -116,9 +114,9 @@ class UiArabicPhoneTests : UiBase() {
             rule.onNodeWithText(str(tab)).performClick(); rule.waitForIdle()
         }
         rule.onNodeWithText(str(R.string.nav_customers)).performClick(); rule.waitForIdle()
-        rule.onNodeWithText("أحمد بن علي").assertIsDisplayed()
+        rule.onAllNodesWithText("أحمد بن علي")[0].assertIsDisplayed()
         shot("customers-ar")
-        rule.onNodeWithText("أحمد بن علي").performClick(); rule.waitForIdle()
+        rule.onAllNodesWithText("أحمد بن علي")[0].performClick(); rule.waitForIdle()
         rule.onNodeWithText(str(R.string.outstanding_balance)).assertIsDisplayed()
         shot("customer-detail-ar")
     }

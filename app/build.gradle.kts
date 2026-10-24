@@ -73,6 +73,7 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            all { it.systemProperty("roborazzi.test.record", "true") }
             all {
                 it.testLogging {
                     events("started", "passed", "failed", "skipped")
@@ -121,6 +122,8 @@ dependencies {
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
     testImplementation(libs.junit4)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

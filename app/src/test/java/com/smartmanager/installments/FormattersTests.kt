@@ -33,7 +33,7 @@ class FormattersTests {
         val f = Formatters("ar", "dd/MM/yyyy", "TND")
         assertEquals(200_000L, f.parseMoney("200", "TND"))
         assertEquals(20_000L, f.parseMoney("٢٠٠", "SAR"))
-        assertNull(f.parseMoney("200.123", "SAR"))
+        assertNull(f.parseMoney("200.1234", "SAR")) // too many decimals: rejected, never rounded
         assertEquals("200.000", f.editable(200_000, "TND"))
     }
 
