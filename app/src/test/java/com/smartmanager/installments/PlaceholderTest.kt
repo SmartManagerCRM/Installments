@@ -1,6 +1,6 @@
 package com.smartmanager.installments
 
 import org.junit.Test
-import kotlin.test.assertTrue
+import org.junit.Assert.assertTrue
 
 class PlaceholderTest { @Test fun builds() = assertTrue(true) }

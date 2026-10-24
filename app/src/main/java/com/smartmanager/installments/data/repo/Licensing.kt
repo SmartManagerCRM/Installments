@@ -98,6 +98,9 @@ class LicenseManager(
 ) {
     private val _state = MutableStateFlow(LicenseCheck(LicenseStatus.NOT_ACTIVATED))
     val state: StateFlow<LicenseCheck> = _state
+    private val _ready = MutableStateFlow(false)
+    /** False until the first verification finished (avoids flashing the activation screen at start-up). */
+    val ready: StateFlow<Boolean> = _ready
 
     /**
      * Stable device-binding id derived from a random installation secret created on first launch. No IMEI/serial/MAC is read.
@@ -127,6 +130,7 @@ class LicenseManager(
         // Only ever move the remembered clock forward: winding the clock back is then visible for duration licenses.
         if (lastSeen()?.let { it < now } != false) secrets.put(LAST_SEEN_KEY, now.toString())
         _state.value = check
+        _ready.value = true
         return check
     }
 
