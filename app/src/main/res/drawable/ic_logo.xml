@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- In-app logo (dark navy cart, orange contract) on transparent background -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#0B2A5B" android:strokeWidth="5" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M12,30 L22,30 L28,62 L74,62" />
+    <path android:fillColor="#1E6FEB" android:pathData="M24,40 L84,40 L77,62 L28,62 Z" />
+    <path android:fillColor="#0B2A5B" android:pathData="M38,78 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <path android:fillColor="#0B2A5B" android:pathData="M68,78 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <path android:fillColor="#FF8A00" android:pathData="M48,10 L72,10 L84,22 L84,52 L48,52 Z" />
+    <path android:fillColor="#FFD3A0" android:pathData="M72,10 L84,22 L72,22 Z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3" android:strokeLineCap="round" android:pathData="M55,30 L77,30 M55,38 L77,38 M55,45 L68,45" />
+</vector>

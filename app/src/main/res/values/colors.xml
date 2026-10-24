@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="sm_background">#F3F7FC</color>
+    <color name="sm_navy">#0B2A5B</color>
+    <color name="sm_blue">#1E6FEB</color>
+    <color name="sm_orange">#FF8A00</color>
+    <color name="sm_green">#1FA463</color>
+    <color name="sm_red">#E5484D</color>
+    <color name="ic_launcher_background">#1E6FEB</color>
+</resources>
