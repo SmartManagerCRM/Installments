@@ -408,6 +408,10 @@ S = {
 "lic_expiring_soon": ("Your license expires in %1$d days. Contact your seller to renew.", "Votre licence expire dans %1$d jours. Contactez votre vendeur pour la renouveler.", "ينتهي ترخيصك بعد %1$d يوماً. تواصل مع البائع للتجديد."),
 "renew_or_replace": ("Renew or replace license", "Renouveler ou remplacer la licence", "تجديد أو استبدال الترخيص"),
 "device_replacement_help": ("New phone or reinstalled app? Make a backup on the old phone, restore it on the new one, then send the new activation request to your seller to receive a replacement license.", "Nouveau téléphone ou application réinstallée ? Faites une sauvegarde sur l'ancien, restaurez-la sur le nouveau, puis envoyez la nouvelle demande d'activation à votre vendeur pour recevoir une licence de remplacement.", "هاتف جديد أو أعدت تثبيت التطبيق؟ أنشئ نسخة احتياطية على الهاتف القديم واستعدها على الجديد، ثم أرسل طلب التفعيل الجديد إلى البائع لتحصل على ترخيص بديل."),
+"attach_file": ("Attach a file…", "Joindre un fichier…", "إرفاق ملف…"),
+"signed_contract_ref": ("Signed contract reference / file (optional)", "Référence / fichier du contrat signé (facultatif)", "مرجع / ملف العقد الموقّع (اختياري)"),
+"receipt_attachment": ("Receipt attachment / reference (optional)", "Pièce jointe / référence du reçu (facultatif)", "مرفق / مرجع الإيصال (اختياري)"),
+"open_attachment": ("open attachment", "ouvrir la pièce jointe", "فتح المرفق"),
 # errors
 "err_generic": ("Something went wrong. Nothing was saved.", "Une erreur est survenue. Rien n'a été enregistré.", "حدث خطأ. لم يتم حفظ أي شيء."),
 "err_license_read_only": ("The license does not allow changes right now (read-only mode).", "La licence n'autorise pas de modification pour le moment (lecture seule).", "الترخيص لا يسمح بالتعديل حالياً (وضع القراءة فقط)."),

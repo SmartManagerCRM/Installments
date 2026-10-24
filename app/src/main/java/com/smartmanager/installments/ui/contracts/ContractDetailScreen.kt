@@ -129,6 +129,7 @@ fun ContractDetailScreen(
                     KeyValueRow(stringResource(R.string.financed_amount), fmt.money(c.financedMinor, c.currency), bold = true)
                     KeyValueRow(stringResource(R.string.total_collected), fmt.money(d.collected, c.currency), Brand.Green)
                     KeyValueRow(stringResource(R.string.outstanding_balance), fmt.money(outstanding, c.currency), if (outstanding > 0) Brand.Red else Brand.Green, bold = true)
+                    c.attachmentUri?.takeIf { it.isNotBlank() }?.let { att -> TextButton(onClick = { com.smartmanager.installments.ui.components.openAttachment(ctx, att) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) { Text(stringResource(R.string.signed_contract_ref) + ": " + (if (att.startsWith("content://")) stringResource(R.string.open_attachment) else att)) } }
                     if (c.rescheduleCount > 0) Text(stringResource(R.string.rescheduled_times, c.rescheduleCount), color = Brand.Orange, style = MaterialTheme.typography.bodySmall)
                 }
             }

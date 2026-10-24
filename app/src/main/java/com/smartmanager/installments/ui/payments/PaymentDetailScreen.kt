@@ -86,6 +86,7 @@ fun PaymentDetailScreen(id: String, onBack: () -> Unit, onOpenContract: (String)
                     Text(methodLabel(p.method) + if (p.kind == PaymentKind.DOWN_PAYMENT) " · " + stringResource(R.string.down_payment) else if (p.kind == PaymentKind.ADJUSTMENT) " · " + stringResource(R.string.settlement_discount) else "")
                     p.reference?.let { KeyValueRow(stringResource(R.string.reference_number), it) }
                     if (p.notes.isNotBlank()) KeyValueRow(stringResource(R.string.notes), p.notes)
+                    p.attachmentUri?.takeIf { it.isNotBlank() }?.let { att -> TextButton(onClick = { com.smartmanager.installments.ui.components.openAttachment(ctx, att) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) { Text(stringResource(R.string.receipt_attachment) + ": " + (if (att.startsWith("content://")) stringResource(R.string.open_attachment) else att)) } }
                 }
             }
             if (allocs.isNotEmpty()) {

@@ -393,6 +393,10 @@
     <string name="lic_expiring_soon" formatted="true">Votre licence expire dans %1$d jours. Contactez votre vendeur pour la renouveler.</string>
     <string name="renew_or_replace">Renouveler ou remplacer la licence</string>
     <string name="device_replacement_help">Nouveau téléphone ou application réinstallée ? Faites une sauvegarde sur l\'ancien, restaurez-la sur le nouveau, puis envoyez la nouvelle demande d\'activation à votre vendeur pour recevoir une licence de remplacement.</string>
+    <string name="attach_file">Joindre un fichier…</string>
+    <string name="signed_contract_ref">Référence / fichier du contrat signé (facultatif)</string>
+    <string name="receipt_attachment">Pièce jointe / référence du reçu (facultatif)</string>
+    <string name="open_attachment">ouvrir la pièce jointe</string>
     <string name="err_generic">Une erreur est survenue. Rien n\'a été enregistré.</string>
     <string name="err_license_read_only">La licence n\'autorise pas de modification pour le moment (lecture seule).</string>
     <string name="err_invalid_amount">Saisissez un montant valide supérieur à zéro.</string>

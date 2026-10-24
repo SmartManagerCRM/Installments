@@ -295,3 +295,30 @@ fun errorText(e: Throwable?): String? {
     }
     return stringResource(res)
 }
+
+
+/** Optional attachment/reference: a free-text reference or a file chosen with the system picker (persisted URI permission). */
+@Composable
+fun AttachmentField(value: String, onChange: (String) -> Unit, label: String) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val picker = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { ctx.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            onChange(uri.toString())
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Field(value, onChange, label)
+        SecondaryButton(stringResource(R.string.attach_file), { picker.launch(arrayOf("*/*")) })
+    }
+}
+
+fun openAttachment(ctx: android.content.Context, value: String) {
+    if (!value.startsWith("content://")) return
+    runCatching {
+        ctx.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(value))
+                .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}

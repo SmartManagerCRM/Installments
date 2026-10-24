@@ -91,6 +91,7 @@ class WizardVm(val c: AppContainer, val preCustomerId: String?, val draftId: Str
     var rows by mutableStateOf<List<SchedRow>>(emptyList())
     var terms by mutableStateOf("")
     var notes by mutableStateOf("")
+    var attachment by mutableStateOf("")
     var error by mutableStateOf<Throwable?>(null)
     var saving by mutableStateOf(false)
     var catalogQuery by mutableStateOf("")
@@ -116,7 +117,7 @@ class WizardVm(val c: AppContainer, val preCustomerId: String?, val draftId: Str
                     down = d.downPaymentMinor.takeIf { it > 0 }?.let { MoneyMath.format(it, Currencies.of(d.currency).decimals, null, '.') } ?: ""
                     frequency = d.frequency
                     rows = d.schedule.map { SchedRow(System.nanoTime() + it.sequence, it.dueDate, MoneyMath.format(it.amountMinor, Currencies.of(d.currency).decimals, null, '.')) }
-                    count = d.schedule.size.toString(); terms = d.terms.ifBlank { terms }; notes = d.notes
+                    count = d.schedule.size.toString(); terms = d.terms.ifBlank { terms }; notes = d.notes; attachment = d.attachmentUri ?: ""
                     step = 4
                 }
             } else {
@@ -176,7 +177,7 @@ class WizardVm(val c: AppContainer, val preCustomerId: String?, val draftId: Str
                     NewContract(
                         cu.id, contractDate, currency,
                         items.mapIndexed { i, it -> NewItem(it.productId, it.description, li[i].quantity, li[i].unitPriceMinor) },
-                        money(discount) ?: 0, money(down) ?: 0, frequency, sched, terms, notes, activate, downMethod,
+                        money(discount) ?: 0, money(down) ?: 0, frequency, sched, terms, notes, activate, downMethod, attachment.ifBlank { null },
                     ),
                     existingDraftId = draftId,
                 )
@@ -289,6 +290,7 @@ fun ContractWizardScreen(customerId: String?, draftId: String?, onBack: () -> Un
                     InfoBanner(stringResource(R.string.terms_legal_notice), Brand.Orange, Brand.OrangeSoft)
                     Field(vm.terms, { vm.terms = it }, stringResource(R.string.contract_terms), singleLine = false, minLines = 5)
                     Field(vm.notes, { vm.notes = it }, stringResource(R.string.notes), singleLine = false, minLines = 2)
+                    com.smartmanager.installments.ui.components.AttachmentField(vm.attachment, { vm.attachment = it }, stringResource(R.string.signed_contract_ref))
                 }
             }
 

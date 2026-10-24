@@ -89,6 +89,7 @@ class PayVm(val c: AppContainer, val preContractId: String?, val preCustomerId: 
     var method by mutableStateOf("CASH")
     var reference by mutableStateOf("")
     var notes by mutableStateOf("")
+    var attachment by mutableStateOf("")
     var manual by mutableStateOf(false)
     var manualAmounts by mutableStateOf<Map<String, String>>(emptyMap())
     var error by mutableStateOf<Throwable?>(null)
@@ -152,7 +153,7 @@ class PayVm(val c: AppContainer, val preContractId: String?, val preCustomerId: 
         viewModelScope.launch {
             runCatching {
                 c.ledger.recordPayment(
-                    PaymentRequest(requestKey, co.id, a, method, reference, notes, null, if (manual) manualLines() else null, rule, confirmDuplicate),
+                    PaymentRequest(requestKey, co.id, a, method, reference, notes, null, if (manual) manualLines() else null, rule, confirmDuplicate, attachment.ifBlank { null }),
                 )
             }.onSuccess { busy = false; outcome = it }
                 .onFailure { busy = false; if ((it as? LedgerException)?.error == LedgerError.POSSIBLE_DUPLICATE) confirmDuplicateDialog = true else error = it }
@@ -261,6 +262,7 @@ fun RecordPaymentScreen(contractId: String?, customerId: String?, onBack: () -> 
                     DropdownField(stringResource(R.string.payment_method), listOf("CASH", "BANK_TRANSFER", "CARD", "OTHER"), vm.method, { methodLabel(it) }, { vm.method = it })
                     Field(vm.reference, { vm.reference = it }, stringResource(R.string.reference_number))
                     Field(vm.notes, { vm.notes = it }, stringResource(R.string.notes), singleLine = false, minLines = 2)
+                    com.smartmanager.installments.ui.components.AttachmentField(vm.attachment, { vm.attachment = it }, stringResource(R.string.receipt_attachment))
                 }
                 3 -> {
                     val a = vm.amountMinor ?: 0

@@ -1,5 +1,7 @@
 package com.smartmanager.installments.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -44,6 +47,7 @@ import com.smartmanager.installments.AppContainer
 import com.smartmanager.installments.R
 import com.smartmanager.installments.core.licensing.LicenseStatus
 import com.smartmanager.installments.data.repo.AppSettings
+import com.smartmanager.installments.ui.components.LocalContainer
 import com.smartmanager.installments.ui.components.LocalSnack
 import com.smartmanager.installments.ui.components.ProvideAppLocals
 import com.smartmanager.installments.ui.license.ActivationScreen
@@ -124,6 +128,7 @@ private fun MainShell(windowSize: WindowSizeClass, snack: SnackbarHostState) {
                 }
             }
             Column(Modifier.weight(1f).fillMaxSize()) {
+                LicenseBanner { nav.navigate(Routes.settingsSection("license")) }
                 AppNavHost(nav, wide)
             }
         }
@@ -136,4 +141,19 @@ private fun go(nav: NavHostController, route: String) {
         launchSingleTop = true
         restoreState = true
     }
+}
+
+
+/** Warns before a duration license expires and explains read-only mode after expiry (data is never hidden or deleted). */
+@Composable
+private fun LicenseBanner(onClick: () -> Unit) {
+    val lic by LocalContainer.current.license.state.collectAsStateWithLifecycle()
+    val readOnly = !lic.allowsWrites
+    val soon = lic.status == LicenseStatus.VALID && lic.expiringSoon
+    if (!readOnly && !soon) return
+    val text = if (soon) stringResource(R.string.lic_expiring_soon, (lic.daysRemaining ?: 0L).toInt())
+    else com.smartmanager.installments.ui.license.statusMessage(lic.status)
+    Box(
+        Modifier.fillMaxWidth().background(if (soon) Brand.OrangeSoft else Brand.RedSoft).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
+    ) { Text(text, color = if (soon) Color(0xFF7A4300) else Brand.Red, style = androidx.compose.material3.MaterialTheme.typography.bodySmall) }
 }

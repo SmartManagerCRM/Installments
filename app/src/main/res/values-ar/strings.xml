@@ -393,6 +393,10 @@
     <string name="lic_expiring_soon" formatted="true">ينتهي ترخيصك بعد %1$d يوماً. تواصل مع البائع للتجديد.</string>
     <string name="renew_or_replace">تجديد أو استبدال الترخيص</string>
     <string name="device_replacement_help">هاتف جديد أو أعدت تثبيت التطبيق؟ أنشئ نسخة احتياطية على الهاتف القديم واستعدها على الجديد، ثم أرسل طلب التفعيل الجديد إلى البائع لتحصل على ترخيص بديل.</string>
+    <string name="attach_file">إرفاق ملف…</string>
+    <string name="signed_contract_ref">مرجع / ملف العقد الموقّع (اختياري)</string>
+    <string name="receipt_attachment">مرفق / مرجع الإيصال (اختياري)</string>
+    <string name="open_attachment">فتح المرفق</string>
     <string name="err_generic">حدث خطأ. لم يتم حفظ أي شيء.</string>
     <string name="err_license_read_only">الترخيص لا يسمح بالتعديل حالياً (وضع القراءة فقط).</string>
     <string name="err_invalid_amount">أدخل مبلغاً صحيحاً أكبر من صفر.</string>

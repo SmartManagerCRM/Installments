@@ -393,6 +393,10 @@
     <string name="lic_expiring_soon" formatted="true">Your license expires in %1$d days. Contact your seller to renew.</string>
     <string name="renew_or_replace">Renew or replace license</string>
     <string name="device_replacement_help">New phone or reinstalled app? Make a backup on the old phone, restore it on the new one, then send the new activation request to your seller to receive a replacement license.</string>
+    <string name="attach_file">Attach a file…</string>
+    <string name="signed_contract_ref">Signed contract reference / file (optional)</string>
+    <string name="receipt_attachment">Receipt attachment / reference (optional)</string>
+    <string name="open_attachment">open attachment</string>
     <string name="err_generic">Something went wrong. Nothing was saved.</string>
     <string name="err_license_read_only">The license does not allow changes right now (read-only mode).</string>
     <string name="err_invalid_amount">Enter a valid amount greater than zero.</string>

@@ -187,7 +187,7 @@ class LedgerRepository(
             c.customerId, LocalDate.ofEpochDay(c.contractDate), c.currency,
             items.map { NewItem(it.productId, it.description, it.quantity, it.unitPriceMinor, it.serialNumber) },
             c.discountMinor, c.downPaymentMinor, runCatching { Frequency.valueOf(c.frequency) }.getOrDefault(Frequency.CUSTOM),
-            inst.map { ScheduledInstallment(it.sequence, LocalDate.ofEpochDay(it.dueDate), it.amountMinor) }, c.terms, c.notes, false,
+            inst.map { ScheduledInstallment(it.sequence, LocalDate.ofEpochDay(it.dueDate), it.amountMinor) }, c.terms, c.notes, false, "CASH", c.attachmentUri,
         )
     }
 
