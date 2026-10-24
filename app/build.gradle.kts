@@ -70,7 +70,19 @@ android {
 
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 
-    testOptions { unitTests { isIncludeAndroidResources = true } }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.testLogging {
+                    events("failed")
+                    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                    showCauses = true
+                    showStackTraces = true
+                }
+            }
+        }
+    }
 
     lint { abortOnError = false }
 }

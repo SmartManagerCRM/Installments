@@ -52,7 +52,7 @@ class LedgerTests {
         // The down payment is a real payment with its own receipt, not an installment payment.
         val dp = db.payments().forCustomer(cust).single()
         assertEquals(PaymentKind.DOWN_PAYMENT, dp.kind); assertEquals(400_000, dp.amountMinor); assertEquals("R-2026-00001", dp.receiptNumber)
-        assertEquals(400_000, db.contracts().observeCollected(id).first())
+        assertEquals(400_000L, db.contracts().observeCollected(id).first())
         // second contract gets the next number
         assertEquals("C-2026-0002", db.contracts().get(env.fridgeContract(cust))!!.number)
     }
@@ -190,7 +190,7 @@ class LedgerTests {
         val adj = db.payments().forCustomer(cust).single { it.kind == PaymentKind.ADJUSTMENT }
         assertEquals(100_000, adj.amountMinor)
         // the discount is not money collected: down 400,000 + 200,000 + 1,700,000
-        assertEquals(2_300_000, db.contracts().observeCollected(id).first())
+        assertEquals(2_300_000L, db.contracts().observeCollected(id).first())
         // retry with the same key does not charge twice
         assertTrue(ledger.settleContract("settle-1", id, 100_000, "CASH", null, "").alreadyPosted)
         assertEquals(LedgerError.DISCOUNT_INVALID, code { runBlocking { ledger.settleContract("x", env.fridgeContract(cust), 2_000_000, "CASH", null, "") } })
@@ -208,7 +208,7 @@ class LedgerTests {
         assertEquals(10, db.payments().allocations(p.id).size) // allocations kept for the audit trail
         assertEquals(2_000_000, env.outstanding(id))          // balance is back
         assertEquals(Status.ACTIVE, db.contracts().get(id)!!.status) // re-opened
-        assertEquals(400_000, db.contracts().observeCollected(id).first()) // only the down payment still counts
+        assertEquals(400_000L, db.contracts().observeCollected(id).first()) // only the down payment still counts
         assertEquals(LedgerError.ALREADY_REVERSED, code { runBlocking { ledger.reversePayment(p.id, "again") } })
         assertEquals(LedgerError.VALIDATION, code { runBlocking { ledger.reversePayment(ledger.recordPayment(pay(id, 100)).payment.id, " ") } })
         // correction = reverse + record the right payment
@@ -334,7 +334,7 @@ class LedgerTests {
         }
         // global invariants: no installment overpaid, allocations of posted payments never exceed the payment
         db.contracts().balances(id).forEach { assertTrue(it.paidMinor <= it.amountMinor) }
-        val collected = db.contracts().observeCollected(id).first() ?: 0
-        assertEquals(2_400_000 - expected, collected) // price - outstanding == collected (incl. down payment)
+        val collected = db.contracts().observeCollected(id).first() ?: 0L
+        assertEquals(2_400_000L - expected, collected) // price - outstanding == collected (incl. down payment)
     }
 }

@@ -97,6 +97,8 @@ class BackupService(private val context: Context, private val db: AppDatabase, p
         } catch (e: BackupException) {
             throw map(e)
         }
+        // Restore must apply the same compatibility rule as inspect(): a backup from a NEWER database schema is refused.
+        if (d.header.dbSchemaVersion > AppDatabase.VERSION) throw RestoreRejected(RestoreRejected.Reason.NEWER_SCHEMA, "${d.header.dbSchemaVersion}")
         val t = d.tables
         val s = try {
             Snapshot(
