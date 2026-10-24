@@ -74,3 +74,4 @@ jobs:
             app/build/test-results
             core/build/test-results
             app/build/reports/lint-results-debug.html
+            app/build/screenshots
