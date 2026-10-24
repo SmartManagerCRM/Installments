@@ -41,6 +41,11 @@ customers/contracts (flagged and removable).
 5. Send the `.smilic` file to the customer.
 6. Customer taps **Import license file**. Activated - fully offline.
 
+## Build outputs
+CI (`.github/workflows/android.yml`) runs every test and publishes the **debug APK**, UI screenshots and `TEST_SUMMARY.txt` to the
+`ci-artifacts` branch. The customer **release** APK must be built by you with your own keys (`docs/BUILD_AND_RELEASE.md`).
+Screenshots: `docs/screenshots/` (Arabic RTL phone, French phone, tablet).
+
 ## Documentation
 * `docs/FINANCIAL_RULES.md` - money, rounding, status, allocation, reversal, reschedule, transactions
 * `docs/LICENSING.md` - format, device binding, procedures (lifetime, duration, replacement), limitations

@@ -33,3 +33,17 @@ These need a device/emulator or a human eye (see also `docs/RELEASE_CHECKLIST.md
 * A payment made before a later reschedule cannot be reversed (documented in `FINANCIAL_RULES.md`).
 * Contract "attachment" is stored as a reference field only; no file picker UI yet.
 * Per-currency aggregates: totals only include the business currency.
+
+## Latest results (GitHub Actions run on commit 61d0086, all jobs green)
+```
+core:  66 tests, 0 failures, 0 errors, 0 skipped      (pure Kotlin: money, schedules, allocation, status, licensing, backup, reminders, Python interop)
+app:   50 tests, 0 failures, 0 errors, 1 skipped      (Room/Robolectric ledger, backup/restore, persistence, license manager, reports, formatters, UI smoke)
+generator: 19 tests OK                                (python -m unittest)
+release smoke build: OK - R8 release APK builds, no INTERNET permission, no key/test files inside the APK
+```
+The 1 skipped test is `pdfDocumentsAreGeneratedForArabicData`: Robolectric has no working `PdfDocument` backend, so **PDF rendering (Arabic shaping, pagination) is NOT verified by automation** and must be checked on a device (see manual list). The data feeding the PDFs (report tables, statement running balance, CSV) *is* tested.
+
+UI smoke tests render the real app on the JVM and saved screenshots (`docs/screenshots/`): Arabic RTL (logo/title on the right, mirrored bottom bar), French LTR, and tablet (navigation rail + two-pane customers).
+The debug APK, screenshots and this summary are published by CI to the `ci-artifacts` branch (`SmartManagerInstallments-debug.apk`, sha256 in `TEST_SUMMARY.txt`). The debug APK trusts only the published TEST license key.
+
+Standalone generator executable: built once on Linux with `pyinstaller smilicgen.spec` (18 MB) and exercised end-to-end (init-keys, export-public, issue, verify) outside Python.
