@@ -7,11 +7,14 @@ import com.smartmanager.installments.data.db.AppDatabase
 import com.smartmanager.installments.data.repo.BackupService
 import com.smartmanager.installments.data.repo.CollectionRepository
 import com.smartmanager.installments.data.repo.CustomerRepository
+import com.smartmanager.installments.data.repo.DemoData
 import com.smartmanager.installments.data.repo.KeystoreSecretStore
 import com.smartmanager.installments.data.repo.LedgerRepository
 import com.smartmanager.installments.data.repo.LicenseKeys
 import com.smartmanager.installments.data.repo.LicenseManager
 import com.smartmanager.installments.data.repo.ProductRepository
+import com.smartmanager.installments.data.repo.ReportBuilder
+import com.smartmanager.installments.pdf.PdfService
 import com.smartmanager.installments.data.repo.SecretStore
 import com.smartmanager.installments.data.repo.SettingsRepository
 import com.smartmanager.installments.util.AppClock
@@ -38,6 +41,9 @@ class AppContainer(
     val products = ProductRepository(db, clock, license.writeGuard)
     val collection = CollectionRepository(db, clock, license.writeGuard)
     val backup = BackupService(context, db, clock, BuildConfig.VERSION_NAME)
+    val demo = DemoData(db, ledger, clock)
+    val reports = ReportBuilder(context, db, settings, clock)
+    val pdf = PdfService(context, db, settings, reports, clock)
 
     companion object {
         fun create(app: Context): AppContainer =

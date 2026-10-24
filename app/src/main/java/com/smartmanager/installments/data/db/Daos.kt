@@ -36,6 +36,12 @@ data class PaymentRow(
     val contractNumber: String,
 )
 
+data class AllocRow(
+    @Embedded val a: PaymentAllocationEntity,
+    val paymentCreatedAt: Long,
+    val paymentStatus: String,
+)
+
 data class AmountCount(val amountMinor: Long, val count: Int)
 
 data class OverdueCustomerRow(
@@ -173,6 +179,8 @@ interface ContractDao {
     @Query("$CONTRACT_SELECT WHERE c.customerId = :customerId ORDER BY c.contractDate DESC, c.number DESC")
     fun observeForCustomer(customerId: String): Flow<List<ContractRow>>
 
+    @Query("$CONTRACT_SELECT WHERE c.customerId = :customerId ORDER BY c.contractDate") suspend fun observeForCustomerOnce(customerId: String): List<ContractRow>
+
     @Query("$CONTRACT_SELECT WHERE c.status = :status ORDER BY c.contractDate DESC") suspend fun byStatus(status: String): List<ContractRow>
 
     @Query("SELECT id FROM contracts WHERE isDemo = 1 OR customerId IN (SELECT id FROM customers WHERE isDemo = 1)")
@@ -232,6 +240,13 @@ interface PaymentDao {
 
     @Query("SELECT * FROM payments WHERE contractId = :contractId ORDER BY paidAt DESC")
     fun observeForContract(contractId: String): Flow<List<PaymentEntity>>
+
+    @Query(
+        """SELECT a.*, p.createdAt AS paymentCreatedAt, p.status AS paymentStatus FROM payment_allocations a
+           JOIN payments p ON p.id = a.paymentId JOIN installments i ON i.id = a.installmentId
+           WHERE p.contractId = :contractId AND i.state = 'ACTIVE'"""
+    )
+    suspend fun allocationsForContract(contractId: String): List<AllocRow>
 
     @Query("SELECT * FROM payments WHERE customerId = :customerId ORDER BY paidAt") suspend fun forCustomer(customerId: String): List<PaymentEntity>
 
