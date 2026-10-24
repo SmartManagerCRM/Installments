@@ -1,0 +1,25 @@
+# Build outputs
+build/
+.gradle/
+*.apk
+*.aab
+local.properties
+.idea/
+*.iml
+captures/
+.cxx/
+# Secrets - NEVER commit (only license-generator/test-keys is allowed, see below)
+*.jks
+*.keystore
+keystore.properties
+signing_key*.pem
+*.signing.pem
+license-generator-data/
+license_history.sqlite*
+# Python
+__pycache__/
+*.pyc
+.venv/
+license-generator/dist/
+license-generator/build/
+*.spec.bak
