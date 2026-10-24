@@ -48,6 +48,21 @@ jobs:
         with:
           name: SmartManagerInstallments-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+      - name: Release build smoke test (throwaway license key, unsigned)
+        run: |
+          pip install -r license-generator/requirements.txt
+          export SMI_LICGEN_PASSPHRASE=ci-throwaway-passphrase-not-a-secret
+          (cd license-generator && python -m smilicgen --home "$RUNNER_TEMP/ci-gen" init-keys \
+             && python -m smilicgen --home "$RUNNER_TEMP/ci-gen" export-public --out ../app/src/main/res/raw/license_public_key.pem)
+          ./gradlew :app:assembleRelease --stacktrace
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          echo "== permissions =="; "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump permissions "$APK" || true
+          if "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump permissions "$APK" | grep -q INTERNET; then echo "INTERNET permission found!"; exit 1; fi
+          echo "== key-like files inside the APK =="; unzip -l "$APK" | grep -i -E "pem|\.key|keystore" || true
+          if unzip -l "$APK" | grep -i -E "signing_key|TEST_ONLY|keystore"; then echo "secret-looking file in APK!"; exit 1; fi
+      - name: Lint (debug)
+        run: ./gradlew :app:lintDebug
+        continue-on-error: true
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -58,3 +73,4 @@ jobs:
             app/build/reports/tests
             app/build/test-results
             core/build/test-results
+            app/build/reports/lint-results-debug.html
