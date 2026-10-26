@@ -327,6 +327,7 @@
     <string name="reset_default">استعادة الافتراضي</string>
     <string name="msg_invalid_phone">رقم هاتف العميل غير صالح لواتساب. تحقق من الرقم ورمز الدولة في الإعدادات.</string>
     <string name="msg_whatsapp_missing">تعذّر فتح واتساب على هذا الهاتف.</string>
+    <string name="msg_whatsapp_failed">تعذّر تجهيز رسالة واتساب</string>
     <string name="about">حول التطبيق</string>
     <string name="version_x" formatted="true">الإصدار %1$s</string>
     <string name="about_offline">يعمل بدون إنترنت بالكامل. بياناتك مخزّنة على هذا الهاتف فقط ولا يُرفع شيء.</string>

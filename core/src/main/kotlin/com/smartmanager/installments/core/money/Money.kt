@@ -14,10 +14,25 @@ data class CurrencyInfo(val code: String, val decimals: Int) {
 }
 
 object Currencies {
+    /**
+     * Decimals follow ISO 4217 except where the minor unit is not used in practice (IQD, SYP, LBP, YER, IRR): those are
+     * handled in whole units so amounts are typed and shown the way shops actually price goods.
+     */
     val supported: List<CurrencyInfo> = listOf(
-        CurrencyInfo("TND", 3), CurrencyInfo("SAR", 2), CurrencyInfo("DZD", 2), CurrencyInfo("MAD", 2),
-        CurrencyInfo("EGP", 2), CurrencyInfo("AED", 2), CurrencyInfo("QAR", 2), CurrencyInfo("KWD", 3),
-        CurrencyInfo("LYD", 3), CurrencyInfo("JOD", 3), CurrencyInfo("EUR", 2), CurrencyInfo("USD", 2),
+        // Arab world first
+        CurrencyInfo("TND", 3), CurrencyInfo("DZD", 2), CurrencyInfo("MAD", 2), CurrencyInfo("LYD", 3), CurrencyInfo("EGP", 2),
+        CurrencyInfo("SAR", 2), CurrencyInfo("AED", 2), CurrencyInfo("QAR", 2), CurrencyInfo("KWD", 3), CurrencyInfo("BHD", 3),
+        CurrencyInfo("OMR", 3), CurrencyInfo("JOD", 3), CurrencyInfo("IQD", 0), CurrencyInfo("SYP", 0), CurrencyInfo("LBP", 0),
+        CurrencyInfo("YER", 0), CurrencyInfo("SDG", 2), CurrencyInfo("MRU", 2),
+        // Neighbours and major world currencies
+        CurrencyInfo("TRY", 2), CurrencyInfo("ILS", 2), CurrencyInfo("IRR", 0), CurrencyInfo("PKR", 2), CurrencyInfo("AFN", 2),
+        CurrencyInfo("INR", 2), CurrencyInfo("EUR", 2), CurrencyInfo("USD", 2), CurrencyInfo("GBP", 2), CurrencyInfo("CHF", 2),
+        CurrencyInfo("CAD", 2), CurrencyInfo("AUD", 2), CurrencyInfo("NZD", 2), CurrencyInfo("JPY", 0), CurrencyInfo("CNY", 2),
+        CurrencyInfo("KRW", 0), CurrencyInfo("RUB", 2), CurrencyInfo("UAH", 2), CurrencyInfo("PLN", 2), CurrencyInfo("CZK", 2),
+        CurrencyInfo("HUF", 2), CurrencyInfo("RON", 2), CurrencyInfo("SEK", 2), CurrencyInfo("NOK", 2), CurrencyInfo("DKK", 2),
+        CurrencyInfo("ZAR", 2), CurrencyInfo("NGN", 2), CurrencyInfo("KES", 2), CurrencyInfo("GHS", 2), CurrencyInfo("XOF", 0),
+        CurrencyInfo("XAF", 0), CurrencyInfo("BRL", 2), CurrencyInfo("MXN", 2), CurrencyInfo("SGD", 2), CurrencyInfo("MYR", 2),
+        CurrencyInfo("IDR", 2), CurrencyInfo("THB", 2), CurrencyInfo("AZN", 2), CurrencyInfo("GEL", 2),
     )
 
     /** Unknown codes fall back to 2 decimals so that data from a newer app version never crashes. */

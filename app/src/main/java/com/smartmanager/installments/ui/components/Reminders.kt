@@ -45,28 +45,33 @@ fun rememberReminderLauncher(): (ReminderRequest) -> Unit {
     val invalidPhone = stringResource(R.string.msg_invalid_phone)
     val noWhatsapp = stringResource(R.string.msg_whatsapp_missing)
     val lang = remember { Locale.getDefault().language }
+    val failed = stringResource(R.string.msg_whatsapp_failed)
     return { r ->
-        val values = mapOf(
-            "customer_name" to r.customerName,
-            "amount" to fmt.money(r.amountMinor, r.currency),
-            "date" to (r.dateEpochDay?.let { fmt.date(it) } ?: ""),
-            "business_name" to settings.businessName,
-            "contract_number" to r.contractNumber,
-            "balance" to fmt.money(r.balanceMinor, r.currency),
-            "receipt_number" to r.receiptNumber,
-        )
-        val message = ReminderTemplates.render(settings.template(lang, r.type), values).trim()
-        val url = WhatsAppLink.build(r.phone, settings.countryCode, message)
         scope.launch {
-            if (url == null) {
-                snack.showSnackbar(invalidPhone)
-            } else {
-                try {
+            // Nothing in here may crash the app: any failure becomes a short message instead.
+            try {
+                val values = mapOf(
+                    "customer_name" to r.customerName,
+                    "amount" to fmt.money(r.amountMinor, r.currency),
+                    "date" to (r.dateEpochDay?.let { fmt.date(it) } ?: ""),
+                    "business_name" to settings.businessName,
+                    "contract_number" to r.contractNumber,
+                    "balance" to fmt.money(r.balanceMinor, r.currency),
+                    "receipt_number" to r.receiptNumber,
+                )
+                val message = ReminderTemplates.render(settings.template(lang, r.type), values).trim()
+                val url = WhatsAppLink.build(r.phone, settings.countryCode, message)
+                if (url == null) {
+                    snack.showSnackbar(invalidPhone)
+                } else {
                     ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    c.collection.recordReminderPrepared(r.customerId, r.contractId, r.type, message)
-                } catch (e: ActivityNotFoundException) {
-                    snack.showSnackbar(noWhatsapp)
+                    // Only recorded as "prepared": the retailer still has to press send inside WhatsApp.
+                    runCatching { c.collection.recordReminderPrepared(r.customerId, r.contractId, r.type, message) }
                 }
+            } catch (e: ActivityNotFoundException) {
+                snack.showSnackbar(noWhatsapp)
+            } catch (e: Exception) {
+                snack.showSnackbar(failed + " (" + e.javaClass.simpleName + ")")
             }
         }
     }

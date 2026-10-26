@@ -37,7 +37,8 @@ object ReminderTemplates {
 
     /** Replaces {key} tokens. Unknown tokens are left untouched so a typo is visible to the retailer. */
     fun render(template: String, values: Map<String, String>): String =
-        Regex("\\{([a-z_]+)}").replace(template) { m -> values[m.groupValues[1]] ?: m.value }
+        // Braces are escaped on purpose: Android's ICU regex rejects an unescaped "}" (the JVM accepts it).
+        Regex("\\{([a-z_]+)\\}").replace(template) { m -> values[m.groupValues[1]] ?: m.value }
 }
 
 object WhatsAppLink {

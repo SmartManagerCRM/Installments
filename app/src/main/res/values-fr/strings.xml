@@ -327,6 +327,7 @@
     <string name="reset_default">Réinitialiser</string>
     <string name="msg_invalid_phone">Le numéro de ce client n\'est pas valide pour WhatsApp. Vérifiez le numéro et l\'indicatif dans les paramètres.</string>
     <string name="msg_whatsapp_missing">Impossible d\'ouvrir WhatsApp sur ce téléphone.</string>
+    <string name="msg_whatsapp_failed">Impossible de préparer le message WhatsApp</string>
     <string name="about">À propos</string>
     <string name="version_x" formatted="true">Version %1$s</string>
     <string name="about_offline">Fonctionne entièrement hors ligne. Vos données sont stockées uniquement sur ce téléphone ; rien n\'est envoyé.</string>

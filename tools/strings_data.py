@@ -339,6 +339,7 @@ S = {
 "reset_default": ("Reset to default", "Réinitialiser", "استعادة الافتراضي"),
 "msg_invalid_phone": ("This customer's phone number is not valid for WhatsApp. Check the number and the country code in Settings.", "Le numéro de ce client n'est pas valide pour WhatsApp. Vérifiez le numéro et l'indicatif dans les paramètres.", "رقم هاتف العميل غير صالح لواتساب. تحقق من الرقم ورمز الدولة في الإعدادات."),
 "msg_whatsapp_missing": ("WhatsApp could not be opened on this phone.", "Impossible d'ouvrir WhatsApp sur ce téléphone.", "تعذّر فتح واتساب على هذا الهاتف."),
+"msg_whatsapp_failed": ("Could not prepare the WhatsApp message", "Impossible de préparer le message WhatsApp", "تعذّر تجهيز رسالة واتساب"),
 "about": ("About", "À propos", "حول التطبيق"),
 "version_x": ("Version %1$s", "Version %1$s", "الإصدار %1$s"),
 "about_offline": ("Works fully offline. Your data is stored only on this phone; nothing is uploaded.", "Fonctionne entièrement hors ligne. Vos données sont stockées uniquement sur ce téléphone ; rien n'est envoyé.", "يعمل بدون إنترنت بالكامل. بياناتك مخزّنة على هذا الهاتف فقط ولا يُرفع شيء."),

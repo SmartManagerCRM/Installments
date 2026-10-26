@@ -26,17 +26,20 @@ class Formatters(val language: String, val dateFormat: String, val defaultCurren
         MoneyMath.format(minor, Currencies.of(currency).decimals, group, decimal)
 
     private val arabicSymbols = mapOf(
-        "TND" to "د.ت", "SAR" to "ر.س", "DZD" to "د.ج", "MAD" to "د.م", "EGP" to "ج.م", "AED" to "د.إ",
-        "QAR" to "ر.ق", "KWD" to "د.ك", "LYD" to "د.ل", "JOD" to "د.أ", "EUR" to "€", "USD" to "$",
+        "TND" to "د.ت", "SAR" to "ر.س", "DZD" to "د.ج", "MAD" to "د.م", "EGP" to "ج.م", "AED" to "د.إ", "QAR" to "ر.ق",
+        "KWD" to "د.ك", "LYD" to "د.ل", "JOD" to "د.أ", "BHD" to "د.ب", "OMR" to "ر.ع", "IQD" to "د.ع", "SYP" to "ل.س",
+        "LBP" to "ل.ل", "YER" to "ر.ي", "SDG" to "ج.س", "MRU" to "أ.م", "TRY" to "ل.ت", "ILS" to "\u20AA", "EUR" to "\u20AC",
+        "USD" to "$", "GBP" to "\u00A3",
+    )
+    private val commonSymbols = mapOf(
+        "EUR" to "\u20AC", "USD" to "$", "GBP" to "\u00A3", "TRY" to "\u20BA", "INR" to "\u20B9", "ILS" to "\u20AA", "JPY" to "\u00A5",
     )
 
-    /** Display symbol: Arabic UI uses the Arabic symbol (د.ت), French uses DT for the dinar, otherwise the ISO code. */
+    /** Display symbol: Arabic UI uses Arabic abbreviations (د.ت, د.ع, ل.س, ل.ت...), French uses DT for the dinar, otherwise common symbols or the ISO code. */
     fun symbol(currency: String): String = when {
-        language.startsWith("ar") -> arabicSymbols[currency] ?: currency
+        language.startsWith("ar") -> arabicSymbols[currency] ?: commonSymbols[currency] ?: currency
         language.startsWith("fr") && currency == "TND" -> "DT"
-        currency == "EUR" -> "\u20AC"
-        currency == "USD" -> "$"
-        else -> currency
+        else -> commonSymbols[currency] ?: currency
     }
 
     /** Amount + symbol wrapped in a directional isolate so it is never reordered inside surrounding text. */

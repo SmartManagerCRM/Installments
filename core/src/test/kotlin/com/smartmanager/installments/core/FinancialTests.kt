@@ -37,6 +37,22 @@ class MoneyTests {
         assertEquals("12", MoneyMath.format(12, 0))
     }
 
+    @Test fun regionalCurrenciesAreSupportedWithTheRightPrecision() {
+        for (c in listOf("IQD", "SYP", "TRY", "LBP", "YER", "SDG", "ILS", "GBP", "CHF", "JPY", "CNY", "INR", "PKR", "IRR", "XOF")) {
+            assertTrue(Currencies.supported.any { it.code == c }, "$c missing")
+        }
+        assertEquals(0, Currencies.of("IQD").decimals); assertEquals(0, Currencies.of("SYP").decimals)
+        assertEquals(2, Currencies.of("TRY").decimals); assertEquals(3, Currencies.of("KWD").decimals); assertEquals(0, Currencies.of("JPY").decimals)
+        assertEquals(Currencies.supported.size, Currencies.supported.map { it.code }.toSet().size) // no duplicates
+        assertTrue(Currencies.supported.size >= 50)
+        // whole-unit currency: amounts are integers and never silently rounded
+        assertEquals(1_250_000L, MoneyMath.parse("1,250,000", 0)); assertNull(MoneyMath.parse("1250000.5", 0))
+        assertEquals("1,250,000", MoneyMath.format(1_250_000, 0))
+        // a schedule in IQD splits whole dinars and still sums exactly
+        val parts = com.smartmanager.installments.core.schedule.ScheduleGenerator.splitAmount(1_000_000, 7, Currencies.of("IQD").unit)
+        assertEquals(1_000_000L, parts.sum())
+    }
+
     @Test fun currencyDecimalsAreNotHardcoded() {
         assertEquals(3, Currencies.of("TND").decimals)
         assertEquals(2, Currencies.of("SAR").decimals)

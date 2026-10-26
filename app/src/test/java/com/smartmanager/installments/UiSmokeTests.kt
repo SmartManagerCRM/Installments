@@ -8,6 +8,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -147,6 +148,26 @@ class UiFrenchPhoneTests : UiBase() {
         shot("dashboard-fr")
         rule.onNodeWithText("Contrats").performClick(); rule.waitForIdle()
         shot("contracts-fr")
+    }
+
+    /** Regression for the crash on tapping the WhatsApp button (an Android-only regex syntax error in template rendering). */
+    @Test fun whatsAppButtonOpensPrefilledChatAndNeverCrashes() {
+        boot(411, 891)
+        rule.onNodeWithText("Total restant dû").assertIsDisplayed()
+        rule.waitUntil(10_000) { rule.onAllNodesWithContentDescription("Rappel WhatsApp").fetchSemanticsNodes().isNotEmpty() }
+        rule.onAllNodesWithContentDescription("Rappel WhatsApp")[0].performClick()
+        rule.waitUntil(10_000) { org.robolectric.Shadows.shadowOf(rule.activity).peekNextStartedActivity() != null }
+        val intent = org.robolectric.Shadows.shadowOf(rule.activity).nextStartedActivity
+        assertEquals(android.content.Intent.ACTION_VIEW, intent.action)
+        val url = intent.data.toString()
+        assertTrue(url, url.startsWith("https://wa.me/21620111222?text="))           // default country code 216 + local number
+        val message = java.net.URLDecoder.decode(url.substringAfter("text="), "UTF-8")
+        assertTrue(message, message.startsWith("Bonjour") && "أحمد بن علي" in message && "DT" in message && "{" !in message) // French template, name + amount filled in
+        // the app only records that WhatsApp was OPENED with a prepared message - never "sent"
+        runBlocking {
+            val r = env.db.bulk().reminders().single()
+            assertEquals("PREPARED", r.outcome); assertEquals("OVERDUE", r.type)
+        }
     }
 
     @Test fun newContractWizardStepsRender() {

@@ -167,7 +167,7 @@ private fun BusinessSection() {
         Field(name, { name = it }, stringResource(R.string.business_name))
         Field(phone, { phone = it }, stringResource(R.string.phone), keyboard = KeyboardType.Phone)
         Field(address, { address = it }, stringResource(R.string.address), singleLine = false, minLines = 2)
-        DropdownField(stringResource(R.string.currency), Currencies.supported.map { it.code }, currency, { it }, { currency = it })
+        DropdownField(stringResource(R.string.currency), Currencies.supported.map { it.code }, currency, { currencyLabel(it) }, { currency = it })
         InfoBanner(stringResource(R.string.currency_note))
         DropdownField(stringResource(R.string.date_format), listOf("dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "dd MMM yyyy"), dateFormat, { it }, { dateFormat = it })
         Field(cc, { cc = it.filter { ch -> ch.isDigit() } }, stringResource(R.string.country_code), keyboard = KeyboardType.Number, suffix = "+")
@@ -247,4 +247,13 @@ private fun AboutSection() {
             }
         }
     }
+}
+
+
+/** "IQD - Iraqi dinar" in the app language (names come from the Android/ICU currency data). */
+@Composable
+private fun currencyLabel(code: String): String {
+    val lang = AppLanguage.current()
+    val name = runCatching { java.util.Currency.getInstance(code).getDisplayName(Locale.forLanguageTag(lang)) }.getOrNull()
+    return if (name.isNullOrBlank() || name == code) code else "$code - $name"
 }

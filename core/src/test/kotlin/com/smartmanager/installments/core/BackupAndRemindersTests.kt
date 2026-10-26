@@ -94,3 +94,37 @@ class ReminderTests {
         assertNull(WhatsAppLink.build("xx", "216", "hi"))
     }
 }
+
+/**
+ * Regression guard: Android's regex engine (ICU) is stricter than the JVM's. An unescaped "}" in a pattern compiles on
+ * the JVM (so every JVM/Robolectric test passes) but throws PatternSyntaxException on a phone. This scans the sources.
+ */
+class AndroidRegexSafetyTests {
+    @Test fun noUnescapedClosingBraceInRegexLiterals() {
+        val roots = listOf(java.io.File("src/main"), java.io.File("../app/src/main"))
+        val offenders = mutableListOf<String>()
+        for (root in roots) root.walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { f ->
+            f.readLines().forEachIndexed { i, line ->
+                Regex("""Regex\("((?:[^"\\]|\\.)*)"""").findAll(line).forEach { m ->
+                    // un-escape the Kotlin string, then look for "}" that is neither escaped nor closing a {n,m} quantifier
+                    val pattern = m.groupValues[1].replace("\\\\", "\\")
+                    var k = 0
+                    while (k < pattern.length) {
+                        when {
+                            pattern[k] == '\\' -> k += 2
+                            pattern[k] == '{' -> { val end = pattern.indexOf('}', k); if (end < 0 || !Regex("\\{\\d+(,\\d*)?\\}").matches(pattern.substring(k, end + 1))) offenders += "${f.path}:${i + 1} unescaped { in $pattern"; k = if (end < 0) k + 1 else end + 1 }
+                            pattern[k] == '}' -> { offenders += "${f.path}:${i + 1} unescaped } in $pattern"; k++ }
+                            else -> k++
+                        }
+                    }
+                }
+            }
+        }
+        assertEquals(emptyList<String>(), offenders)
+    }
+
+    @Test fun templateRenderingWorksWithEscapedBraces() {
+        val msg = ReminderTemplates.render("Hi {customer_name}, {amount} due {date}. {unknown}", mapOf("customer_name" to "Ali", "amount" to "5", "date" to "d"))
+        assertEquals("Hi Ali, 5 due d. {unknown}", msg)
+    }
+}
