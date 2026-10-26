@@ -14,7 +14,8 @@ Offline Android app for retailers who sell on installments (electronics, applian
 |---|---|
 | `core/` | **Pure Kotlin/JVM** business logic: money, schedules, payment allocation, installment status, collection rules, reminders/WhatsApp links, license verification, backup container. Fully unit-tested, no Android/DB/UI dependency |
 | `app/` | Android application: `data/db` (Room entities, DAOs, view), `data/repo` (ledger, customers, products, settings, license manager, backup, reports, demo), `pdf/`, `ui/` (dashboard, customers, contracts, payments, collection, reports, settings, license, products, navigation, theme, components), `util/` |
-| `license-generator/` | Python/Tkinter owner tool (GUI + CLI), tests, test keys, sample licenses, PyInstaller build |
+| `license-manager/` | **JavaScript owner tool (recommended)**: one offline page - paste the Device ID, choose lifetime/subscription, get the license; register, renew, verify, CSV |
+| `license-generator/` | Python/Tkinter edition of the owner tool (GUI + CLI), tests, test keys, sample licenses, PyInstaller build |
 | `docs/` | Financial rules, licensing, build/release, install & activation, release checklist, future cloud sync, testing |
 | `tools/` | `gen_strings.py` generates `strings.xml` for ar/fr/en from one table and verifies keys/placeholders |
 | `.github/workflows/android.yml` | CI: generator tests, core tests, app tests, debug APK |
@@ -37,7 +38,7 @@ customers/contracts (flagged and removable).
    `app/src/main/res/raw/license_public_key.pem`, build the signed release APK (`docs/BUILD_AND_RELEASE.md`).
 2. Install the APK on the customer's phone (`docs/INSTALL_AND_ACTIVATE.md`).
 3. Customer taps **Copy/Share** on the Activation screen and sends you the `SMI-ACT-1:...` request.
-4. In the generator (`python3 -m smilicgen`): customer name, *Lifetime* or *Custom duration* (+ dates), paste the request, **Generate and save**.
+4. Open `license-manager/index.html`: paste the request or Device ID, customer name, *Lifetime* or *Subscription (days)*, **Issue license**.
 5. Send the `.smilic` file to the customer.
 6. Customer taps **Import license file**. Activated - fully offline.
 

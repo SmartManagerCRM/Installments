@@ -54,3 +54,21 @@ class PythonInteropTests {
         assertNotNull(text)
     }
 }
+
+/** Licenses issued by the JAVASCRIPT license manager (license-manager/samples) must verify in the Kotlin verifier too. */
+class JavaScriptInteropTests {
+    private val dir = File("../license-manager/samples")
+    private val ring = PublicKeyRing.fromPems(listOf(File("../license-generator/test-keys/TEST_ONLY_public_key.pem").readText()))
+    private val device = "0000-1111-2222-3333-4444"
+    private val now = LocalDate.of(2026, 6, 1).atStartOfDay().toEpochSecond(ZoneOffset.UTC)
+    private fun check(name: String, dev: String = device) = LicenseVerifier.verify(File(dir, name).readText(), ring, dev, now, null)
+
+    @Test fun lifetimeAndDurationFromJavaScript() {
+        assertEquals(LicenseStatus.VALID, check("js-lifetime.smilic").status)
+        val d = check("js-duration-valid-until-2099.smilic")
+        assertEquals(LicenseStatus.VALID, d.status); assertTrue(d.daysRemaining!! > 365 * 70)
+        assertEquals(LicenseStatus.EXPIRED, check("js-duration-expired-2021.smilic").status)
+        assertEquals(LicenseStatus.WRONG_DEVICE, check("js-lifetime.smilic", "FFFF-FFFF-FFFF-FFFF-FFFF").status)
+        assertEquals("Boutique Test JS", check("js-lifetime.smilic").payload!!.customerName)
+    }
+}

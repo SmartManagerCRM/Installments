@@ -1,4 +1,8 @@
-# SmartManager Installments - License Generator (owner tool)
+# SmartManager Installments - License Generator (Python edition)
+
+> **Recommended tool: `../license-manager/` (JavaScript, one offline page - just double-click `index.html`).**
+> It issues the same licenses. This Python edition remains as a command-line alternative; both are tested against each other.
+
 
 A small **offline desktop tool** (Python + Tkinter) that you, the product owner, use to create licenses for your
 customers. It is **not** part of the customer app, the APK or the customer release package. Nothing here talks to
