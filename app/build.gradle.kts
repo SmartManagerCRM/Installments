@@ -22,7 +22,8 @@ android {
         applicationId = "com.smartmanager.installments"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
+        // Monotonic: CI run number (so each CI build is a valid update), local builds fall back to 100.
+        versionCode = 100 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0)
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Only Arabic, French and English resources are shipped (smaller APK, no stray translations from libraries).
