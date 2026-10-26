@@ -131,6 +131,10 @@ jobs:
     needs: android
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [26, 30, 34]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -143,7 +147,7 @@ jobs:
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: ${{ matrix.api }}
           arch: x86_64
           target: google_apis
           script: bash .github/ci/install-test.sh

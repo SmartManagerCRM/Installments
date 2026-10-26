@@ -38,9 +38,6 @@ android {
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
-            // Sign with both schemes: some OEM package installers are picky about v2-only APKs.
-            enableV1Signing = true
-            enableV2Signing = true
         }
         if (keystoreProps.containsKey("storeFile")) {
             create("release") {

@@ -55,3 +55,7 @@ key, `keystore.properties`/`.jks`, debug builds, test keys. Computer the SHA-256
 `app/debug.keystore` (password `android`) is committed deliberately: it signs DEBUG builds only, so that every debug/CI APK has the same
 signature and installs as an update over the previous one ("App not installed" otherwise). It protects nothing and is never used for customers.
 Your **release** keystore is different, is created by you, and must never be committed (`.gitignore` blocks `*.jks` / `*.keystore`).
+
+The debug key mimics the Android Gradle Plugin default debug key (RSA-2048, SHA256withRSA, ~30 years, `CN=Android Debug`). An earlier
+version used SHA384withRSA with a 100-year validity (expiry year 2126); builds signed that way failed to install on at least one phone
+("App not installed") while builds with the default-style certificate installed, so keep these parameters.
