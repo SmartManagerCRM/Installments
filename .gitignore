@@ -11,6 +11,7 @@ captures/
 # Secrets - NEVER commit (only license-generator/test-keys is allowed, see below)
 *.jks
 *.keystore
+!app/debug.keystore
 keystore.properties
 signing_key*.pem
 *.signing.pem

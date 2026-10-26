@@ -30,6 +30,14 @@ android {
     }
 
     signingConfigs {
+        // Debug builds are always signed with the SAME committed (public, debug-only) key, so every CI/debug APK can be installed
+        // as an update over the previous one. Never used for customers; release signing uses keystore.properties below.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (keystoreProps.containsKey("storeFile")) {
             create("release") {
                 storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))

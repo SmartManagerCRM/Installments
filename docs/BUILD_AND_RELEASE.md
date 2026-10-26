@@ -50,3 +50,8 @@ license names its signing key via `kid`, so adding a second key during rotation 
 ## Distributing
 Send customers only the signed `app-release.apk` (or host it for download). Never send: the license generator, any `.pem` private
 key, `keystore.properties`/`.jks`, debug builds, test keys. Computer the SHA-256 of the APK and publish it with the download.
+
+## Debug signing key (public on purpose)
+`app/debug.keystore` (password `android`) is committed deliberately: it signs DEBUG builds only, so that every debug/CI APK has the same
+signature and installs as an update over the previous one ("App not installed" otherwise). It protects nothing and is never used for customers.
+Your **release** keystore is different, is created by you, and must never be committed (`.gitignore` blocks `*.jks` / `*.keystore`).
