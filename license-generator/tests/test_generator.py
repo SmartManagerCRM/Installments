@@ -255,6 +255,11 @@ class RepositoryHygieneTests(unittest.TestCase):
                 continue
             if "test-keys" in p.parts and p.parent.name == "test-keys":
                 continue
+            # the JavaScript tool embeds the published TEST key and its tests contain fake PEM strings (intentional)
+            if p.parent.name == "license-manager" and p.name == "test-key.js":
+                continue
+            if "license-manager" in p.parts and "tests" in p.parts:
+                continue
             if p.suffix in {".class", ".jar", ".apk", ".png", ".sqlite", ".pyc"} or "__pycache__" in p.parts:
                 continue
             try:
