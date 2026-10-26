@@ -61,6 +61,15 @@ jobs:
         run: ./gradlew :app:testDebugUnitTest --stacktrace
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
+      - name: Inspect APK (signature, alignment, manifest)
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          APK=$(ls app/build/outputs/apk/debug/*.apk)
+          { echo "build-tools: $BT"
+            "$BT/apksigner" verify --verbose --print-certs "$APK" || echo "APKSIGNER FAILED"
+            "$BT/zipalign" -c -P 16 -v 4 "$APK" | tail -3 || echo "ZIPALIGN FAILED"
+            "$BT/aapt2" dump badging "$APK" | grep -E "^(package|sdkVersion|targetSdkVersion|application-debuggable|native-code|uses-)" ; } > app/build/APK_CHECK.txt 2>&1
+          cat app/build/APK_CHECK.txt
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -72,6 +81,7 @@ jobs:
           rm -rf /tmp/out && mkdir -p /tmp/out/screenshots /tmp/out/schemas
           cp app/build/outputs/apk/debug/*.apk /tmp/out/SmartManagerInstallments-debug.apk
           cp -r app/build/screenshots/. /tmp/out/screenshots/ 2>/dev/null || true
+          cp app/build/APK_CHECK.txt /tmp/out/APK_CHECK.txt 2>/dev/null || true
           cp -r app/schemas/. /tmp/out/schemas/ 2>/dev/null || true
           python3 - <<'PY' > /tmp/out/TEST_SUMMARY.txt
           import glob, re
@@ -115,3 +125,29 @@ jobs:
             core/build/test-results
             app/build/reports/lint-results-debug.html
             app/build/screenshots
+
+  install-test:
+    # Installs the freshly built debug APK on a real Android emulator and launches it (reports the exact installer error if any).
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: SmartManagerInstallments-debug-apk
+          path: apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          script: |
+            adb install -r apk/*.apk 2>&1 | tee install.log
+            adb shell am start -W -n com.smartmanager.installments.debug/com.smartmanager.installments.MainActivity | tee start.log
+            sleep 8
+            adb shell pidof com.smartmanager.installments.debug && echo APP_RUNNING
+            adb logcat -d -s AndroidRuntime:E | tail -30
