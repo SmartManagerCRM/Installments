@@ -12,7 +12,7 @@ from . import __version__
 from .formats import human_summary, parse_license_file
 from .history import History
 from .keys import (KeyError_, backup_key, default_home, generate_key, is_encrypted, key_file, load_signer, public_pem)
-from .service import IssueError, issue_license, reissue_license
+from .service import IssueError, export_csv, issue_license, license_status, reissue_license, renew_license, valid_to_text
 from .verify import verify_license
 
 
@@ -63,16 +63,26 @@ def build_parser() -> argparse.ArgumentParser:
 
     i = sub.add_parser("issue", help="issue a new license")
     i.add_argument("--customer", required=True)
-    i.add_argument("--customer-ref")
+    i.add_argument("--customer-ref", "--order", dest="customer_ref", help="order or invoice reference (no personal data)")
     i.add_argument("--type", choices=["lifetime", "duration"], required=True)
-    i.add_argument("--start", type=_date, default=date.today())
+    i.add_argument("--start", type=_date, default=None, help="default: today")
     i.add_argument("--expiry", type=_date, help="last valid day (inclusive) for --type duration")
+    i.add_argument("--days", type=int, help="alternative to --expiry: valid for N days from the start date")
     i.add_argument("--tz", default="Africa/Tunis")
     i.add_argument("--notes")
     g = i.add_mutually_exclusive_group(required=True)
     g.add_argument("--request", help="activation request text (SMI-ACT-1:...) or device id")
     g.add_argument("--request-file")
     i.add_argument("--out", help="output file (default: ./<license-id>-r1.smilic)")
+
+    n = sub.add_parser("renew", help="new code for the SAME phone: renew a subscription / change validity")
+    n.add_argument("--license-id", required=True)
+    n.add_argument("--type", choices=["lifetime", "duration"], required=True)
+    n.add_argument("--days", type=int, help="subscription length in days from today")
+    n.add_argument("--expiry", type=_date)
+    n.add_argument("--out")
+    c = sub.add_parser("export-csv", help="export every issued license to CSV")
+    c.add_argument("--out", required=True)
 
     r = sub.add_parser("reissue", help="issue a replacement license for a new device")
     r.add_argument("--license-id", required=True)
@@ -128,10 +138,20 @@ def main(argv=None) -> int:
         if args.cmd == "issue":
             signer, hist = _signer(args), _history(args)
             lic = issue_license(signer, hist, customer_name=args.customer, customer_ref=args.customer_ref, kind=args.type,
-                                start=args.start, expiry=args.expiry, tz=args.tz, request_text=_read_request(args), notes=args.notes)
+                                start=args.start, expiry=args.expiry, days=args.days, tz=args.tz, request_text=_read_request(args), notes=args.notes)
             out = Path(args.out or lic.suggested_filename)
             out.write_text(lic.file_json, encoding="utf-8")
             print(lic.summary + f"\n\nLicense file written to {out}")
+            return 0
+        if args.cmd == "renew":
+            signer, hist = _signer(args), _history(args)
+            lic = renew_license(signer, hist, license_id=args.license_id, kind=args.type, days=args.days, expiry=args.expiry)
+            out = Path(args.out or lic.suggested_filename)
+            out.write_text(lic.file_json, encoding="utf-8")
+            print(lic.summary + f"\n\nRenewal license written to {out}")
+            return 0
+        if args.cmd == "export-csv":
+            print(f"{export_csv(_history(args), args.out)} rows written to {args.out}")
             return 0
         if args.cmd == "reissue":
             signer, hist = _signer(args), _history(args)
@@ -143,8 +163,8 @@ def main(argv=None) -> int:
             return 0
         if args.cmd == "list":
             hist = _history(args)
-            for r in hist.search(args.query):
-                print(f"{r.license_id} r{r.revision}  {r.kind:8} {_fmt_ts(r.start_at)}..{_fmt_ts(r.expires_at):10}  {r.customer_name}  [{r.device_id}]")
+            for r in hist.latest_all(args.query):
+                print(f"{r.license_id} r{r.revision}  {license_status(r):13} {r.kind:8} to {valid_to_text(r):10}  {r.customer_name}  [{r.device_id}]")
             return 0
         if args.cmd == "show":
             payload, *_ = parse_license_file(Path(args.file).read_text(encoding="utf-8"))

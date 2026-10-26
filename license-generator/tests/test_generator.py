@@ -17,7 +17,8 @@ from smilicgen.formats import (b64u, make_activation_request, parse_activation_r
                                canonical_json, start_of_day_epoch, end_of_day_epoch)
 from smilicgen.history import History
 from smilicgen.keys import KeyError_, backup_key, generate_key, load_signer, public_pem, inside_git_worktree
-from smilicgen.service import IssueError, issue_license, reissue_license
+from smilicgen.service import (IssueError, export_csv, expiry_from_days, issue_license, license_status, reissue_license,
+                               renew_license, valid_to_text)
 from smilicgen.verify import verify_license
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,6 +105,62 @@ class IssueTests(Base):
         lic = self.issue(customer_name="متجر النور – Élégance")
         self.assertEqual(parse_license_file(lic.file_json)[0]["customerName"], "متجر النور – Élégance")
         self.assertEqual(verify_license(lic.file_json, self.pub, DEVICE, int(NOW.timestamp()))[0], "VALID")
+
+
+class SimpleFlowTests(Base):
+    """The 'paste the device id, choose lifetime or N days, press issue' flow used by the GUI."""
+
+    def test_device_id_alone_and_days_validity(self):
+        lic = issue_license(self.signer, self.hist, customer_name="Quick Shop", kind="duration", days=30, request_text=DEVICE, now=NOW, tz="UTC")
+        p, *_ = parse_license_file(lic.file_json)
+        # NOW = 2026-01-15 12:00 UTC -> start 2026-01-15 00:00, last valid second 2026-02-14 23:59:59
+        self.assertEqual(p["startAt"], int(datetime(2026, 1, 15, tzinfo=timezone.utc).timestamp()))
+        self.assertEqual(p["expiresAt"], int(datetime(2026, 2, 14, 23, 59, 59, tzinfo=timezone.utc).timestamp()))
+        self.assertEqual(verify_license(lic.file_json, self.pub, DEVICE, p["expiresAt"])[0], "VALID")
+        self.assertEqual(verify_license(lic.file_json, self.pub, DEVICE, p["expiresAt"] + 1)[0], "EXPIRED")
+        self.assertEqual(expiry_from_days(date(2026, 1, 15), 30), date(2026, 2, 14))
+        for bad in (0, -3, 99999):
+            with self.assertRaises(IssueError): expiry_from_days(date(2026, 1, 1), bad)
+
+    def test_start_defaults_to_today(self):
+        lic = issue_license(self.signer, self.hist, customer_name="Today Shop", kind="lifetime", request_text=DEVICE, now=NOW, tz="UTC")
+        self.assertEqual(parse_license_file(lic.file_json)[0]["startAt"], int(datetime(2026, 1, 15, tzinfo=timezone.utc).timestamp()))
+
+    def test_renew_keeps_the_same_phone_and_needs_no_new_request(self):
+        first = issue_license(self.signer, self.hist, customer_name="Sub Shop", customer_ref="INV-9", kind="duration", days=30, request_text=DEVICE, now=NOW, tz="UTC")
+        later = datetime(2026, 2, 20, 9, 0, tzinfo=timezone.utc)  # after it expired
+        self.assertEqual(license_status(first.record, int(later.timestamp())), "EXPIRED")
+        second = renew_license(self.signer, self.hist, license_id=first.record.license_id, kind="duration", days=30, now=later)
+        self.assertEqual((second.record.revision, second.record.device_id, second.record.customer_ref), (2, DEVICE, "INV-9"))
+        self.assertEqual(verify_license(second.file_json, self.pub, DEVICE, int(later.timestamp()))[0], "VALID")
+        self.assertEqual(license_status(second.record, int(later.timestamp())), "ACTIVE")
+        # switch to lifetime
+        third = renew_license(self.signer, self.hist, license_id=first.record.license_id, kind="lifetime", now=later)
+        self.assertNotIn("expiresAt", parse_license_file(third.file_json)[0]); self.assertEqual(valid_to_text(third.record), "lifetime")
+        with self.assertRaises(IssueError): renew_license(self.signer, self.hist, license_id=first.record.license_id, kind="duration", now=later)  # needs days
+        with self.assertRaises(IssueError): renew_license(self.signer, self.hist, license_id="SMI-NOPE", kind="lifetime")
+
+    def test_register_shows_latest_revision_per_license(self):
+        a = issue_license(self.signer, self.hist, customer_name="Alpha", kind="lifetime", request_text=DEVICE, now=NOW, tz="UTC")
+        issue_license(self.signer, self.hist, customer_name="Beta", kind="lifetime", request_text="AAAA-BBBB-CCCC-DDDD-EEEE", now=NOW, tz="UTC")
+        renew_license(self.signer, self.hist, license_id=a.record.license_id, kind="lifetime", now=NOW)
+        rows = self.hist.latest_all()
+        self.assertEqual(len(rows), 2)
+        self.assertEqual({r.customer_name: r.revision for r in rows}, {"Alpha": 2, "Beta": 1})
+        self.assertEqual([r.customer_name for r in self.hist.latest_all("beta")], ["Beta"])
+
+    def test_status_labels(self):
+        rec = issue_license(self.signer, self.hist, customer_name="S", kind="duration", start=date(2026, 3, 1), expiry=date(2026, 3, 31), request_text=DEVICE, now=NOW, tz="UTC").record
+        self.assertEqual(license_status(rec, int(datetime(2026, 1, 1, tzinfo=timezone.utc).timestamp())), "NOT YET VALID")
+        self.assertEqual(license_status(rec, int(datetime(2026, 3, 15, tzinfo=timezone.utc).timestamp())), "ACTIVE")
+        self.assertEqual(license_status(rec, int(datetime(2026, 4, 2, tzinfo=timezone.utc).timestamp())), "EXPIRED")
+
+    def test_csv_export_is_formula_safe(self):
+        issue_license(self.signer, self.hist, customer_name="=cmd|' /C calc'!A0", kind="lifetime", request_text=DEVICE, now=NOW)
+        path = Path(self.tmp.name) / "x.csv"
+        self.assertEqual(export_csv(self.hist, path), 1)
+        text = path.read_text(encoding="utf-8-sig")
+        self.assertIn("'=cmd", text); self.assertNotIn(",=cmd", text)
 
 
 class RequestTests(unittest.TestCase):

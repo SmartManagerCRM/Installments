@@ -14,82 +14,78 @@ license-generator/
   smilicgen.spec, build_exe.sh, build_exe.bat   executable build
 ```
 
-## 1. Run it
+## 1. Run it (double-click)
+
+* **Windows:** double-click `START_LICENSE_MANAGER.bat` (needs Python 3.10+ from python.org, "Add to PATH" ticked; it installs the 2 small
+  dependencies by itself the first time).
+* **macOS / Linux:** `./start_license_manager.sh` (Linux: `sudo apt install python3-tk` once).
+* Or by hand: `pip install -r requirements.txt` then `python3 -m smilicgen`.
+
+The window has four tabs: **1. Keys**, **2. Issue license**, **3. Customers & licenses**, **4. Verify license**.
+
+## 2. Issue a license (the everyday job - 30 seconds)
+
+1. The customer opens the app -> activation screen -> **Copy/Share** and sends you the text (`SMI-ACT-1:...`) or just the **Device ID**.
+2. Open **tab 2. Issue license**:
+   * **Private key file / Passphrase** - for your production key type its passphrase. For the *debug* test app press **Use TEST key**
+     (no passphrase).
+   * **Device ID or Activation request** - paste what the customer sent (either form works).
+   * **Customer / note** - the customer's name (private; shown only in your register).
+   * **Order reference** - optional invoice/order number.
+   * **Validity** - *Lifetime* (never expires) or *Subscription: valid for N days* (counted from today; works until the end of that day).
+   * **Save license as** - leave empty: the file is saved automatically in `<data folder>/licenses/` and its path is shown.
+3. Press **Issue license**. The output pane shows the license ID, the summary and the **one-line license code**.
+   Send the saved `.smilic` file (or the code: **Copy license code**) to the customer.
+4. The customer taps **Import license file** (or pastes the code and taps **Activate**). Done, offline.
+
+## 3. Customers & licenses (tab 3)
+
+A register of every license (latest revision of each): order ref, customer/note, license ID, **ACTIVE / EXPIRED / NOT YET VALID** (colour coded),
+valid-to date, revision, device ID. Search box on top. Buttons:
+
+| Button | What it does |
+|---|---|
+| **Renew / change validity...** | new code for the **same phone** (revision + 1): renew a subscription for N more days, or switch to lifetime. No new request code needed |
+| **New phone (replacement)...** | customer changed/lost the phone: paste the NEW request code, give a reason, tick the identity check -> replacement license bound to the new phone |
+| **History** | all revisions of the selected license (dates, device, reason) |
+| **Save license file... / Copy license code** | re-send a license you issued earlier |
+| **Export CSV...** | every issued license to Excel-friendly CSV |
+
+How control works offline: a subscription ends by itself on its end date unless you send a renewal code - that is how you stop a customer who does not pay.
+An app that has no internet connection **cannot be switched off remotely**; there are no "suspend/cancel codes" in this version.
+
+## 4. First-time setup of the production key
+
+Only needed for customer builds (the debug app uses the TEST key button). In **tab 1. Keys**:
+type a passphrase (10+ characters) in the Passphrase box, press **Create new signing key**, then **Back up private key...** (two offline copies) and
+**Export public key for the app...** (save it as `app/src/main/res/raw/license_public_key.pem` and rebuild the app).
+Command line equivalent:
 
 ```bash
-python3 -m pip install -r requirements.txt     # cryptography, tzdata  (Tkinter ships with python.org / Windows Python)
-python3 -m smilicgen                           # opens the graphical interface
-python3 -m smilicgen --help                    # command line interface (same logic)
-```
-
-Linux note: install Tk with your package manager if missing (`sudo apt install python3-tk`).
-
-## 2. First-time setup: create your signing key (once)
-
-```bash
-python3 -m smilicgen init-keys                 # asks for a passphrase (>= 10 characters), twice
-```
-
-* The **private key** is created in your *data directory* (default `~/.smartmanager-licensegen/signing_key.pem`, or
-  `%APPDATA%\SmartManagerLicenseGen\` on Windows; override with `--home` or `SMI_LICGEN_HOME`), encrypted with your
-  passphrase (PKCS#8 / PBES2), file mode `0600`.
-* The tool **refuses** to create it inside a Git working tree and refuses to overwrite an existing key.
-* Algorithm: **ECDSA P-256 with SHA-256 ("ES256")** - supported natively on every Android version and by the Python
-  `cryptography` package. (Ed25519 is not available on all Android versions the app supports.)
-
-Then export the **public** key and put it into the Android project:
-
-```bash
+python3 -m smilicgen init-keys
 python3 -m smilicgen export-public --out ../app/src/main/res/raw/license_public_key.pem
-```
-
-Rebuild the app. Release builds **fail** while that file still contains the placeholder, and they never trust the test key.
-
-### Back up the key (do this now)
-
-```bash
 python3 -m smilicgen backup-key --out /path/on/usb/smi-signing-key-BACKUP.pem
 ```
 
-The backup is the same passphrase-encrypted file. Keep **two offline copies in different places** and store the
-passphrase separately (password manager + paper). If you lose the key or its passphrase you can no longer issue licenses
-that already-shipped apps accept (you would have to ship a new app build with a new public key).
-**Recovery** = copy the backup file to `<data dir>/signing_key.pem` and unlock it with the passphrase.
+* The **private key** lives in your data folder (`~/.smartmanager-licensegen/` or `%APPDATA%\SmartManagerLicenseGen\`), encrypted with your passphrase.
+  The tool refuses to create it inside a Git folder or to overwrite an existing key.
+* Algorithm: ECDSA P-256 / SHA-256. Losing the key or passphrase means you can't issue licenses that already-shipped apps accept - keep the backups.
+* **Rotation:** create a new key pair, ship an app update that trusts both public keys (`LicenseKeys.load`), issue new licenses with the new key, later drop the old one.
 
-### Rotating the key
-
-1. `init-keys --home <new dir>` creates a new pair (new key id = first 8 hex chars of SHA-256 of the public key).
-2. Add the new public key to the app (`LicenseKeys` accepts a *list* of PEMs: put the new file in `res/raw` and extend
-   `LicenseKeys.load`), release the new app version. The old key stays accepted so existing licenses keep working.
-3. Issue new licenses with `--key <new key file>`. After all customers updated, remove the old public key.
-Every license carries `kid`, so the app picks the right key.
-
-## 3. Issue a license
-
-1. The customer opens the app -> *Activation* screen -> **Copy / Share** the *activation request* (`SMI-ACT-1:...`) and sends it to you (WhatsApp, e-mail...).
-2. In the generator: *New license* tab -> customer name, optional reference -> type:
-   * **Lifetime**: no expiry date (never expires with time).
-   * **Custom duration**: start date + *last valid day* (inclusive). Quick buttons +1/3/6/12/24 months.
-3. Paste the activation request (or load it from a file). The device id inside is bound into the license.
-4. Press **Generate and save license...** -> save the `.smilic` file -> send it to the customer.
-5. The customer opens *Activation* -> **Import license file** (or pastes the one-line text form). Done, offline.
-
-CLI equivalent:
+### Command line (same logic as the window)
 
 ```bash
-python3 -m smilicgen issue --customer "Boutique Elnour" --customer-ref C-0042 --type lifetime \
-        --request "SMI-ACT-1:...." --out elnour.smilic
-python3 -m smilicgen issue --customer "Boutique Elnour" --type duration --start 2026-11-01 --expiry 2027-10-31 \
-        --tz Africa/Tunis --request-file request.txt
+python3 -m smilicgen --key test-keys/TEST_ONLY_signing_key.pem issue --customer "Boutique Elnour" --order INV-1042 --type duration --days 30 --request "SMI-ACT-1:..." 
+python3 -m smilicgen --key <key> renew --license-id SMI-... --type duration --days 30
+python3 -m smilicgen list "elnour"          # register with status
+python3 -m smilicgen export-csv --out issued.csv
+python3 -m smilicgen verify file.smilic --public-key test-keys/TEST_ONLY_public_key.pem --device XXXX-XXXX-XXXX-XXXX-XXXX
 ```
-
-**Time zones are explicit**: the start is `00:00:00` and the expiry `23:59:59` *in the time zone you choose* (default
-`Africa/Tunis`), converted to UTC epoch seconds inside the signed payload. Duration licenses are evaluated against the
-phone's clock; see `docs/LICENSING.md` for clock-tampering behaviour.
+Time zones are explicit: start `00:00:00` / expiry `23:59:59` in the chosen zone (default `Africa/Tunis`, `--tz` to change).
 
 ## 4. Replacement (new phone, reset, reinstall)
 
-*History / Reissue* tab -> select the license -> **Reissue replacement for new device...** -> paste the NEW activation
+*Customers & licenses* tab -> select the license -> **New phone (replacement)...** -> paste the NEW activation
 request, enter the reason, tick *I verified the customer*. The replacement keeps the same license id (revision + 1), customer
 and validity, bound to the new device. CLI: `python3 -m smilicgen reissue --license-id SMI-... --reason "phone lost" --verified --request ...`.
 

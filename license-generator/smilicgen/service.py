@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import secrets
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import Optional
 
 from .formats import (DEFAULT_FEATURES, LicenseSpec, build_license_file, end_of_day_epoch, human_summary,
@@ -73,10 +74,21 @@ def _build(signer: Signer, *, license_id: str, revision: int, customer_name: str
     return IssuedLicense(file_json, to_text_form(file_json), human_summary(payload), rec)
 
 
+def expiry_from_days(start: date, days: int) -> date:
+    """'Valid for N days' = the license works until the END of the day that is N days after the start date."""
+    if days < 1 or days > 3660:
+        raise IssueError("Number of days must be between 1 and 3660")
+    return start + timedelta(days=days)
+
+
 def issue_license(signer: Signer, history: History, *, customer_name: str, customer_ref: Optional[str] = None, kind: str,
-                  start: date, expiry: Optional[date] = None, tz: str = "Africa/Tunis", request_text: str,
-                  notes: Optional[str] = None, now: Optional[datetime] = None, features: Optional[list] = None) -> IssuedLicense:
+                  start: Optional[date] = None, expiry: Optional[date] = None, days: Optional[int] = None, tz: str = "Africa/Tunis",
+                  request_text: str, notes: Optional[str] = None, now: Optional[datetime] = None, features: Optional[list] = None) -> IssuedLicense:
     now = now or datetime.now(timezone.utc)
+    if start is None:
+        start = now.astimezone(ZoneInfo(tz)).date()
+    if kind == "duration" and expiry is None and days is not None:
+        expiry = expiry_from_days(start, days)
     lic = _build(signer, license_id=new_license_id(now), revision=1, customer_name=customer_name, customer_ref=customer_ref,
                  kind=kind, start=start, expiry=expiry, tz=tz, request_text=request_text, notes=notes, reissue_reason=None,
                  now=now, features=features)
@@ -98,7 +110,6 @@ def reissue_license(signer: Signer, history: History, *, license_id: str, reques
         raise IssueError(f"Unknown license id {license_id}")
     now = now or datetime.now(timezone.utc)
     tz = prev.tz
-    from zoneinfo import ZoneInfo
     zone = ZoneInfo(tz)
     prev_start = datetime.fromtimestamp(prev.start_at, zone).date()
     prev_exp = datetime.fromtimestamp(prev.expires_at, zone).date() if prev.expires_at is not None else None
@@ -108,3 +119,60 @@ def reissue_license(signer: Signer, history: History, *, license_id: str, reques
                  notes=prev.notes, reissue_reason=reason.strip(), now=now, features=None)
     history.add(lic.record)
     return lic
+
+
+def renew_license(signer: Signer, history: History, *, license_id: str, kind: str, start: Optional[date] = None,
+                  expiry: Optional[date] = None, days: Optional[int] = None, reason: str = "renewal",
+                  now: Optional[datetime] = None) -> IssuedLicense:
+    """New code for the SAME phone (revision + 1): renew a subscription, change its length, or switch lifetime <-> subscription.
+    No new request code is needed because the device id is taken from the previous revision."""
+    prev = history.latest_revision(license_id)
+    if prev is None:
+        raise IssueError(f"Unknown license id {license_id}")
+    now = now or datetime.now(timezone.utc)
+    zone = ZoneInfo(prev.tz)
+    start = start or now.astimezone(zone).date()
+    if kind == "duration" and expiry is None:
+        if days is None:
+            raise IssueError("Enter the number of days (or an expiry date)")
+        expiry = expiry_from_days(start, days)
+    lic = _build(signer, license_id=license_id, revision=prev.revision + 1, customer_name=prev.customer_name,
+                 customer_ref=prev.customer_ref, kind=kind, start=start, expiry=expiry if kind == "duration" else None,
+                 tz=prev.tz, request_text=prev.device_id, notes=prev.notes, reissue_reason=(reason or "renewal").strip(),
+                 now=now, features=None)
+    history.add(lic.record)
+    return lic
+
+
+def license_status(rec: IssuedRecord, now_epoch: Optional[int] = None) -> str:
+    """ACTIVE / EXPIRED / NOT YET VALID, evaluated at the owner's computer clock (the app uses the phone's clock)."""
+    now_epoch = int(datetime.now(timezone.utc).timestamp()) if now_epoch is None else now_epoch
+    if rec.start_at - 24 * 3600 > now_epoch:
+        return "NOT YET VALID"
+    if rec.expires_at is not None and now_epoch > rec.expires_at:
+        return "EXPIRED"
+    return "ACTIVE"
+
+
+def valid_to_text(rec: IssuedRecord) -> str:
+    if rec.expires_at is None:
+        return "lifetime"
+    return datetime.fromtimestamp(rec.expires_at, ZoneInfo(rec.tz)).strftime("%Y-%m-%d")
+
+
+def export_csv(history: History, path) -> int:
+    """Writes every issued license revision to a UTF-8 CSV (Excel-friendly) and returns the row count."""
+    import csv
+    rows = history.all_rows()
+    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(["license_id", "revision", "customer", "order_reference", "type", "device_id", "issued_at_utc", "valid_from", "valid_to", "key_id", "note", "reason"])
+        for r in rows:
+            def safe(v):  # neutralise spreadsheet formulas
+                v = "" if v is None else str(v)
+                return "'" + v if v[:1] in "=+-@" else v
+            w.writerow([r.license_id, r.revision, safe(r.customer_name), safe(r.customer_ref), r.kind, r.device_id,
+                        datetime.fromtimestamp(r.issued_at, timezone.utc).strftime("%Y-%m-%d %H:%M"),
+                        datetime.fromtimestamp(r.start_at, ZoneInfo(r.tz)).strftime("%Y-%m-%d"), valid_to_text(r), r.key_id,
+                        safe(r.notes), safe(r.reissue_reason)])
+    return len(rows)

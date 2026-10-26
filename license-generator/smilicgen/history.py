@@ -84,5 +84,17 @@ class History:
             "OR device_id LIKE ? ORDER BY issued_at DESC, revision DESC LIMIT ?", (like, like, like, like, limit))
         return [self._row(r) for r in rows]
 
+    def latest_all(self, text: str = "", limit: int = 1000) -> list[IssuedRecord]:
+        """One row per license id (its latest revision) - the 'customers and licenses' register."""
+        like = f"%{text.strip()}%"
+        rows = self.db.execute(
+            "SELECT * FROM issued i WHERE revision = (SELECT MAX(revision) FROM issued WHERE license_id = i.license_id) "
+            "AND (license_id LIKE ? OR customer_name LIKE ? OR IFNULL(customer_ref,'') LIKE ? OR device_id LIKE ? OR IFNULL(notes,'') LIKE ?) "
+            "ORDER BY issued_at DESC LIMIT ?", (like, like, like, like, like, limit))
+        return [self._row(r) for r in rows]
+
+    def all_rows(self) -> list[IssuedRecord]:
+        return [self._row(r) for r in self.db.execute("SELECT * FROM issued ORDER BY issued_at, revision")]
+
     def close(self) -> None:
         self.db.close()
