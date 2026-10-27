@@ -17,6 +17,8 @@ Everything is reproducible from source: Gradle wrapper 8.11.1, AGP 8.7.3, Kotlin
 The GitHub Actions workflow (`.github/workflows/android.yml`) runs all of the above on every push and uploads the debug APK
 and test reports as artifacts.
 
+> **Non-technical owner? Use `docs/CUSTOMER_VERSION_SIMPLE.md`** (License Manager only: license key + browser APK signing).
+
 ## Release APK (customer build)
 1. **Create your signing key and export the public key** (once, see `license-generator/README.md`):
    `python3 -m smilicgen init-keys` then
