@@ -42,7 +42,7 @@
 <main>
 <nav id="tabs">
   <button data-t="keys">1. Keys</button><button data-t="issue" class="on">2. Issue license</button>
-  <button data-t="register">3. Customers &amp; licenses</button><button data-t="verify">4. Verify license</button>
+  <button data-t="register">3. Customers &amp; licenses</button><button data-t="verify">4. Verify license</button><button data-t="app">5. Customer app (APK)</button>
 </nav>
 
 <!-- 1. KEYS -->
@@ -59,6 +59,7 @@
       <button class="btn" id="btnBackupKey">Download key backup (.smikey)</button>
       <button class="btn" id="btnRestoreKey">Restore key from backup...</button>
       <button class="btn" id="btnExportPub">Export public key for the app (.pem)</button>
+      <button class="btn" id="btnCopyPub">Copy public key (send it to your developer)</button>
     </div>
     <label>Register backup</label>
     <div class="row">
@@ -124,6 +125,23 @@
   <input type="file" id="fileV" hidden>
 </section>
 
+<!-- 5. CUSTOMER APP -->
+<section id="app">
+  <div class="note"><b>What this is:</b> Android only installs an app that is <b>signed by its publisher</b>. This tab signs the customer app with <b>your own app key</b>, on this computer - nothing is uploaded.
+  You do it once per app version: (A) create your app key one time, (B) pick the <b>unsigned</b> customer APK you received and press Sign. Give customers only the signed file this tab produces.</div>
+  <div class="grid">
+    <label>A. Your app key</label><div id="appKeyStatus"></div>
+    <label>Passphrase (min. 10)</label><div><input type="password" id="appPass" autocomplete="new-password"><div class="hint">Protects the app key file. Needed to create it and every time you sign.</div></div>
+    <label></label><div class="row">
+      <button class="btn primary" id="btnAppCreate">Create my app key (once)</button>
+      <button class="btn" id="btnAppBackup">Download app key backup (.smiapp)</button>
+      <button class="btn" id="btnAppRestore">Restore app key from backup...</button></div>
+    <label>B. Unsigned customer APK</label><div><div class="row"><button class="btn" id="btnApkPick">Choose APK file...</button><span id="apkName" class="hint">none chosen</span></div></div>
+    <label></label><div><button class="btn primary big" id="btnApkSign">Sign the APK</button></div>
+  </div>
+  <input type="file" id="fileApk" accept=".apk" hidden><input type="file" id="fileApp" accept=".smiapp,.json" hidden>
+</section>
+
 <div id="out">Ready. Tab 2: paste the phone's Device ID or activation request, choose the validity and press "Issue license".</div>
 </main>
 
@@ -139,6 +157,7 @@
 
 <script src="smilic-core.js"></script>
 <script src="test-key.js"></script>
+<script src="apk-signer.js"></script>
 <script>
 'use strict';
 const $ = (id) => document.getElementById(id);
@@ -203,6 +222,7 @@ $('btnRestoreKey').onclick = async () => {
 $('btnExportPub').onclick = async () => {
   try { const s = await getSignerForProd(); download('license_public_key.pem', s.publicPem, 'text/plain'); show(`Public key (id ${s.keyId}) downloaded as license_public_key.pem.\nCopy it to app/src/main/res/raw/license_public_key.pem and rebuild the release APK.\n\n${s.publicPem}`, 'ok'); } catch (e) { fail(e); }
 };
+$('btnCopyPub').onclick = async () => { try { const s = await getSignerForProd(); await copy(s.publicPem); show(`Public key (id ${s.keyId}) copied. It is safe to send - it cannot create licenses.\n\n${s.publicPem}`, 'ok'); } catch (e) { fail(e); } };
 async function getSignerForProd() { const prev = $('keySel').value; $('keySel').value = 'prod'; if (!$('pass').value) $('pass').value = $('newPass').value; try { return await getSigner(); } finally { $('keySel').value = prev; } }
 $('btnBackupReg').onclick = () => { download(`smartmanager-license-register-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(store.all(), null, 1), 'application/json'); show(`Register backup downloaded (${store.all().length} entries).`, 'ok'); };
 $('btnRestoreReg').onclick = async () => {
@@ -263,7 +283,50 @@ $('btnVerify').onclick = async () => {
   try { const r = await SMI.verifyLicense($('vLic').value, $('vPub').value, $('vDev').value); show(`Result: ${r.status}\n\n` + (r.payload ? SMI.humanSummary(r.payload) : ''), r.status === 'VALID' ? 'ok' : 'err'); } catch (e) { fail(e); }
 };
 
-keyStatus(); renderRegister();
+// ---------- 5. customer app (APK signing)
+const APPKEY_SLOT = 'smi_appkey_v1';
+let apkPicked = null;
+function appKeyStatus() {
+  const k = localStorage.getItem(APPKEY_SLOT);
+  let t = 'No app key in this browser yet. Press "Create my app key".';
+  if (k) { try { t = 'App key present. Publisher fingerprint: ' + JSON.parse(k).fp.slice(0, 16).toUpperCase() + '... (must stay the same for every release).'; } catch (e) { t = 'Stored app key is damaged - restore it from your backup.'; } }
+  $('appKeyStatus').textContent = t;
+}
+function readBinary(input) { return new Promise((res) => { input.onchange = () => { const f = input.files[0]; input.value = ''; if (!f) return res(null); const r = new FileReader(); r.onload = () => res({ name: f.name, bytes: new Uint8Array(r.result) }); r.readAsArrayBuffer(f); }; input.click(); }); }
+$('btnAppCreate').onclick = async () => {
+  try {
+    if (localStorage.getItem(APPKEY_SLOT)) throw new SMI.IssueError('An app key already exists in this browser. Do NOT create a second one: customers could not update the app. Restore your backup instead if this is a new computer.');
+    show('Creating the app key (a few seconds)...');
+    const key = await SMIAPK.createAppKey();
+    const file = await SMIAPK.protectAppKey(key, $('appPass').value);
+    localStorage.setItem(APPKEY_SLOT, file); appKeyStatus();
+    download('smartmanager-app-key.smiapp', file);
+    show('App key created. A backup file (smartmanager-app-key.smiapp) was downloaded.\n\nKEEP TWO COPIES OFFLINE and remember the passphrase. If you lose this key, customers can never update the app over the installed one.', 'ok');
+  } catch (e) { fail(e); }
+};
+$('btnAppBackup').onclick = () => { const k = localStorage.getItem(APPKEY_SLOT); if (!k) return fail(new SMI.IssueError('No app key to back up.')); download('smartmanager-app-key.smiapp', k); show('App key backup downloaded. Keep two offline copies.', 'ok'); };
+$('btnAppRestore').onclick = async () => {
+  try { const f = await readFile($('fileApp')); if (!f) return; const o = JSON.parse(f.text); if (o.fmt !== 'SMI-APPKEY-1') throw new SMI.IssueError('Not a SmartManager app key backup (.smiapp).');
+    localStorage.setItem(APPKEY_SLOT, f.text); appKeyStatus(); show('App key restored. Type its passphrase when you sign.', 'ok'); } catch (e) { fail(e.name === 'SyntaxError' ? new SMI.IssueError('Not a SmartManager app key backup (.smiapp).') : e); }
+};
+$('btnApkPick').onclick = async () => { const f = await readBinary($('fileApk')); if (f) { apkPicked = f; $('apkName').textContent = `${f.name} (${(f.bytes.length / 1048576).toFixed(1)} MB)`; } };
+$('btnApkSign').onclick = async () => {
+  try {
+    const k = localStorage.getItem(APPKEY_SLOT);
+    if (!k) throw new SMI.IssueError('Create your app key first (step A).');
+    if (!apkPicked) throw new SMI.IssueError('Choose the unsigned APK first (step B).');
+    show('Signing...');
+    const key = await SMIAPK.unlockAppKey(k, $('appPass').value);
+    const signed = await SMIAPK.signApk(apkPicked.bytes, key);
+    const check = await SMIAPK.verifyApk(signed);
+    const sha = SMIAPK.hex(await SMIAPK.sha256(signed));
+    const out = apkPicked.name.replace(/-?unsigned/i, '').replace(/\.apk$/i, '') + '-signed.apk';
+    download(out, signed, 'application/vnd.android.package-archive');
+    show(`Signed APK downloaded: ${out}\n\nSHA-256: ${sha}\nPublisher fingerprint: ${check.certFingerprint.slice(0, 16).toUpperCase()}...\n\nGive customers THIS file (not the unsigned one). Publish the SHA-256 next to the download so they can check it.`, 'ok');
+  } catch (e) { fail(e); }
+};
+
+keyStatus(); appKeyStatus(); renderRegister();
 </script>
 </body>
 </html>

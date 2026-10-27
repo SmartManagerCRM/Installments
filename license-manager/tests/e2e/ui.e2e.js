@@ -82,6 +82,27 @@ const shots = process.argv[2];
   assert.match(await waitOut(/Result: VALID/), /Result: VALID/);
   await page.fill('#vDev', 'FFFF-FFFF-FFFF-FFFF-FFFF'); await page.click('#btnVerify'); assert.match(await waitOut(/WRONG_DEVICE/), /WRONG_DEVICE/);
 
+  // --- customer app tab: create app key, sign an "unsigned APK", result verifies
+  const { makeZip } = require('../zip-fixture.js'); const A = require('../../apk-signer.js');
+  await page.click('#tabs button[data-t=app]');
+  await page.fill('#appPass', 'short'); await page.click('#btnAppCreate'); assert.match(await waitOut(/at least 10 characters/), /at least 10/);
+  await page.fill('#appPass', 'my long app passphrase');
+  [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btnAppCreate')]);
+  const fk = path.join(os.tmpdir(), 'e2e.smiapp'); await dl.saveAs(fk);
+  assert.match(await waitOut(/App key created/), /KEEP TWO COPIES/);
+  await page.click('#btnAppCreate'); assert.match(await waitOut(/already exists/), /Do NOT create a second/);
+  await page.click('#btnApkSign'); assert.match(await waitOut(/Choose the unsigned APK first/), /unsigned APK first/);
+  const apkPath = path.join(os.tmpdir(), 'e2e-customer-unsigned.apk'); fs.writeFileSync(apkPath, makeZip([['AndroidManifest.xml', Buffer.from('m')], ['classes.dex', Buffer.alloc(1500000, 7)]]));
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#btnApkPick')]); await chooser.setFiles(apkPath);
+  await page.fill('#appPass', 'wrong wrong wrong'); await page.click('#btnApkSign'); assert.match(await waitOut(/wrong passphrase/), /wrong passphrase/);
+  await page.fill('#appPass', 'my long app passphrase');
+  [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btnApkSign')]);
+  assert.equal(dl.suggestedFilename(), 'e2e-customer-signed.apk');
+  const signedPath = path.join(os.tmpdir(), 'e2e-signed.apk'); await dl.saveAs(signedPath);
+  const chk = await A.verifyApk(new Uint8Array(fs.readFileSync(signedPath)));
+  assert.equal(chk.certFingerprint, (await A.unlockAppKey(fs.readFileSync(fk, 'utf8'), 'my long app passphrase')).fingerprint);
+  if (shots) await page.screenshot({ path: path.join(shots, 'js-customer-app.png') });
+
   // --- data persists across reload (localStorage)
   await page.reload(); await page.click('#tabs button[data-t=register]');
   assert.equal(await page.locator('#regBody tr').count(), 3);

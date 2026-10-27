@@ -75,6 +75,13 @@ jobs:
         with:
           name: SmartManagerInstallments-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+      - name: Customer release build (unsigned) - only when the production license key is in the repo
+        run: |
+          KEY=app/src/main/res/raw/license_public_key.pem
+          if grep -q PLACEHOLDER "$KEY"; then echo "Production license key not added yet - customer build skipped."; exit 0; fi
+          ./gradlew :app:assembleRelease --stacktrace
+          mkdir -p customer && cp app/build/outputs/apk/release/*.apk customer/SmartManagerInstallments-customer-UNSIGNED.apk
+          echo "built customer build with key $(sha256sum $KEY | cut -c1-16)"
       - name: Publish build outputs to the ci-artifacts branch
         if: github.event_name == 'push'
         run: |
@@ -82,6 +89,7 @@ jobs:
           cp app/build/outputs/apk/debug/*.apk /tmp/out/SmartManagerInstallments-debug.apk
           cp -r app/build/screenshots/. /tmp/out/screenshots/ 2>/dev/null || true
           cp app/build/APK_CHECK.txt /tmp/out/APK_CHECK.txt 2>/dev/null || true
+          cp customer/SmartManagerInstallments-customer-UNSIGNED.apk /tmp/out/ 2>/dev/null || true
           cp -r app/schemas/. /tmp/out/schemas/ 2>/dev/null || true
           python3 - <<'PY' > /tmp/out/TEST_SUMMARY.txt
           import glob, re
@@ -110,6 +118,18 @@ jobs:
           if "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump permissions "$APK" | grep -q INTERNET; then echo "INTERNET permission found!"; exit 1; fi
           echo "== key-like files inside the APK =="; unzip -l "$APK" | grep -i -E "pem|\.key|keystore" || true
           if unzip -l "$APK" | grep -i -E "signing_key|TEST_ONLY|keystore"; then echo "secret-looking file in APK!"; exit 1; fi
+      - name: Sign the release smoke APK with the License Manager's APK signer and verify it with apksigner
+        run: |
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          node license-manager/tools/sign-apk.js --in "$APK" --out release-signed-test.apk --throwaway
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose --print-certs release-signed-test.apk
+          "$BT/aapt2" dump badging release-signed-test.apk | grep -E "^(package|sdkVersion|targetSdkVersion|application-debuggable)" || true
+      - name: Upload signed release smoke APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-signed-test-apk
+          path: release-signed-test.apk
       - name: Lint (debug)
         run: ./gradlew :app:lintDebug
         continue-on-error: true
@@ -141,6 +161,10 @@ jobs:
         with:
           name: SmartManagerInstallments-debug-apk
           path: apk
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-signed-test-apk
+          path: rel
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
