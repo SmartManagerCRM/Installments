@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -191,7 +193,8 @@ fun DashboardScreen(
                 val perRow = if (maxWidth > 640.dp) 4 else 2
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     cards.chunked(perRow).forEach { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { row.forEach { it(Modifier.weight(1f)) } }
+                        // equal heights within a row, whatever the language wraps to
+                        Row(Modifier.height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) { row.forEach { it(Modifier.weight(1f).fillMaxHeight()) } }
                     }
                 }
             }
@@ -233,11 +236,11 @@ fun DashboardScreen(
             }
 
             // Quick actions: one row of four cards with a tinted icon each (orange = main call to action)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                QuickAction(Modifier.weight(1f), stringResource(R.string.add_customer), rememberVectorPainter(Icons.Filled.PersonAdd), Brand.Green, Brand.GreenSoft, !readOnly, onAddCustomer)
-                QuickAction(Modifier.weight(1f), stringResource(R.string.new_contract), rememberVectorPainter(Icons.Filled.Description), Brand.Blue, Brand.BlueSoft, !readOnly, onNewContract)
-                QuickAction(Modifier.weight(1f), stringResource(R.string.record_payment), rememberVectorPainter(Icons.Filled.AccountBalanceWallet), Brand.Orange, Brand.OrangeSoft, !readOnly, onRecordPayment)
-                QuickAction(Modifier.weight(1f), stringResource(R.string.send_reminder), painterResource(R.drawable.ic_whatsapp), Brand.Purple, Brand.PurpleSoft, true, onCollection)
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                QuickAction(Modifier.weight(1f).fillMaxHeight(), stringResource(R.string.add_customer), rememberVectorPainter(Icons.Filled.PersonAdd), Brand.Green, Brand.GreenSoft, !readOnly, onAddCustomer)
+                QuickAction(Modifier.weight(1f).fillMaxHeight(), stringResource(R.string.new_contract), rememberVectorPainter(Icons.Filled.Description), Brand.Blue, Brand.BlueSoft, !readOnly, onNewContract)
+                QuickAction(Modifier.weight(1f).fillMaxHeight(), stringResource(R.string.record_payment), rememberVectorPainter(Icons.Filled.AccountBalanceWallet), Brand.Orange, Brand.OrangeSoft, !readOnly, onRecordPayment)
+                QuickAction(Modifier.weight(1f).fillMaxHeight(), stringResource(R.string.send_reminder), painterResource(R.drawable.ic_whatsapp), Brand.Purple, Brand.PurpleSoft, true, onCollection)
             }
 
             // Upcoming payments

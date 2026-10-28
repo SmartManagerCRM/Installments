@@ -1,0 +1,3 @@
+# Baseline profile (wildcard): pre-compiles all of the app's own code at install time so screens open without first-run JIT stutter.
+HSPLcom/smartmanager/installments/**;->**(**)**
+Lcom/smartmanager/installments/**;
