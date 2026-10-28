@@ -1,0 +1,4 @@
+core: tests=70 failures=0 errors=0 skipped=0
+app: tests=53 failures=0 errors=0 skipped=1
+7ccd4f06e257f00dafd1a9bdab8c026b232232f3cb0e700f418949de4f55bc6d  /tmp/out/SmartManagerInstallments-debug.apk
+commit: 668141f7c41eb22cf2fd20a350646001d0abfc56
