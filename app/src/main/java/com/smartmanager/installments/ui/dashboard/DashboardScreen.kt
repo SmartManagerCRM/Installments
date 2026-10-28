@@ -216,6 +216,7 @@ fun DashboardScreen(
                                 Text(fmt.money(r.overdueMinor, st.currency), color = Brand.Red, fontWeight = FontWeight.Bold)
                             }
                             Text(stringResource(R.string.days_overdue, days.toInt()), color = Brand.Red, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.size(12.dp))
                             // plain clickable Box (not IconButton, which would clip the tile to a circle)
                             Box(
                                 Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(WhatsAppGreen).clickable {
