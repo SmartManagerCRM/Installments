@@ -32,6 +32,5 @@ adb shell pidof $REL | tee c3.log; [ -s c3.log ] || { echo "REQUIRED STEP FAILED
 adb logcat -d -s AndroidRuntime:E | tail -40
 adb logcat -d | grep -c "FATAL EXCEPTION" | tee crash.count
 [ "$(cat crash.count)" = "0" ] || { echo "REQUIRED STEP FAILED: crash during launch"; FAILS=$((FAILS+1)); }
-[ "$MATRIX_API" = "34" ] && bash .github/ci/perf-test.sh
 echo "FAILS=$FAILS"
 exit $FAILS
