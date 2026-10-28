@@ -2,7 +2,7 @@
 # Drives the bottom navigation on the emulator with real animations ON and prints frame statistics (jank) per build.
 # Informational only (emulator rendering is slow in absolute terms; compare debug vs release and before/after).
 tap_text() {  # tap the centre of the first UI node whose text equals $1
-  adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml u.xml >/dev/null 2>&1
+  adb shell uiautomator dump /sdcard/u.xml 2>&1 | head -2 | sed 's/^/  dump: /'; adb pull /sdcard/u.xml u.xml 2>&1 | head -1 | sed 's/^/  pull: /'; [ -n "$DBG" ] || { head -c 600 u.xml; echo; DBG=1; }
   xy=$(python3 - "$1" <<'PY'
 import sys,re,xml.etree.ElementTree as ET
 t=sys.argv[1]
