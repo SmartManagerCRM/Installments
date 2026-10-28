@@ -109,9 +109,11 @@ fun SMTopBar(title: String, onBack: (() -> Unit)? = null, actions: @Composable (
 fun SMCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, container: Color = MaterialTheme.colorScheme.surface, content: @Composable () -> Unit) {
     val shape = RoundedCornerShape(18.dp)
     val colors = CardDefaults.cardColors(containerColor = container)
-    val elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    if (onClick != null) Card(onClick = onClick, modifier = modifier, shape = shape, colors = colors, elevation = elevation) { content() }
-    else Card(modifier = modifier, shape = shape, colors = colors, elevation = elevation) { content() }
+    // Flat card with a hairline border instead of a drop shadow: shadows are costly to draw on every card of every list on mid-range phones.
+    val elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    val border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+    if (onClick != null) Card(onClick = onClick, modifier = modifier, shape = shape, colors = colors, elevation = elevation, border = border) { content() }
+    else Card(modifier = modifier, shape = shape, colors = colors, elevation = elevation, border = border) { content() }
 }
 
 @Composable
