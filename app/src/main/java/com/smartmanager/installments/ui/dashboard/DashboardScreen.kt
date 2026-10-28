@@ -35,6 +35,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -133,6 +136,8 @@ fun DashboardScreen(
         // Header: menu | logo + name | notification indicator (mirrors automatically in RTL)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenSettings) { Icon(Icons.Filled.Menu, stringResource(R.string.settings), tint = Brand.Navy) }
+            // The brand lockup keeps the same order (logo left, name right) in every language, as in the design.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 Image(painterResource(R.drawable.ic_logo), null, Modifier.size(56.dp))
                 Spacer(Modifier.size(6.dp))
@@ -141,6 +146,7 @@ fun DashboardScreen(
                     Text("SmartManager", color = Brand.Navy, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, lineHeight = 22.sp)
                     Text("Installments", color = BrandOrangeText, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, lineHeight = 22.sp)
                 }
+            }
             }
             val alerts = (s?.dueToday?.count ?: 0) + (s?.overdue?.count ?: 0)
             IconButton(onClick = onCollection) {
@@ -210,12 +216,14 @@ fun DashboardScreen(
                                 Text(fmt.money(r.overdueMinor, st.currency), color = Brand.Red, fontWeight = FontWeight.Bold)
                             }
                             Text(stringResource(R.string.days_overdue, days.toInt()), color = Brand.Red, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-                            IconButton(onClick = {
-                                remind(ReminderRequest(r.customerId, r.customerName, r.phone, null, ReminderType.OVERDUE, r.overdueMinor, st.currency, r.oldestDueDate))
-                            }) {
-                                Box(Modifier.size(40.dp).background(WhatsAppGreen, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                                    Icon(painterResource(R.drawable.ic_whatsapp), stringResource(R.string.whatsapp_reminder), tint = Color.White, modifier = Modifier.size(26.dp))
-                                }
+                            // plain clickable Box (not IconButton, which would clip the tile to a circle)
+                            Box(
+                                Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(WhatsAppGreen).clickable {
+                                    remind(ReminderRequest(r.customerId, r.customerName, r.phone, null, ReminderType.OVERDUE, r.overdueMinor, st.currency, r.oldestDueDate))
+                                },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(painterResource(R.drawable.ic_whatsapp), stringResource(R.string.whatsapp_reminder), tint = Color.White, modifier = Modifier.size(28.dp))
                             }
                         }
                         if (i < st.overdueCustomers.lastIndex) androidx.compose.material3.HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
