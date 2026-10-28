@@ -1,9 +1,7 @@
 package com.smartmanager.installments.ui.navigation
 
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -36,13 +34,14 @@ private val optionalString = { name: String -> navArgument(name) { type = NavTyp
 fun AppNavHost(nav: NavHostController, wide: Boolean) {
     fun back() { nav.popBackStack() }
     fun String.orNull() = ifBlank { null }
-    // Navigation Compose's default is a 700 ms cross-fade for every screen change, which feels very slow. Keep transitions short.
+    // No animated transitions: Navigation Compose's default is a 700 ms cross-fade, and any fade overlaps the two screens (their
+    // backgrounds are transparent), which showed as ghosted text/flicker while changing page. Pages swap instantly instead.
     NavHost(
         nav, startDestination = Routes.HOME,
-        enterTransition = { fadeIn(tween(120)) },
+        enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
-        popEnterTransition = { fadeIn(tween(100)) },
-        popExitTransition = { fadeOut(tween(90)) },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
     ) {
         composable(Routes.HOME) {
             DashboardScreen(
