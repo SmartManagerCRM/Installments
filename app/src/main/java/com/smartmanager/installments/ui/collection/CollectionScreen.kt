@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -147,7 +146,7 @@ fun CollectionScreen(onBack: () -> Unit, onOpenCustomer: (String) -> Unit) {
                                 val amount = if (type == ReminderType.PROMISE_FOLLOWUP) i.openPromiseAmountMinor ?: i.outstandingMinor else if (i.overdueMinor > 0) i.overdueMinor else if (i.dueTodayMinor > 0) i.dueTodayMinor else i.outstandingMinor
                                 val date = if (type == ReminderType.PROMISE_FOLLOWUP) i.openPromiseDateEpochDay else st.todayEpochDay - i.oldestOverdueDays
                                 remind(ReminderRequest(i.customerId, i.customerName, i.phone, null, type, amount, st.currency, date, balanceMinor = i.outstandingMinor))
-                            }) { Icon(Icons.Filled.Chat, stringResource(R.string.whatsapp_reminder), tint = Brand.Green) }
+                            }) { Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_whatsapp), stringResource(R.string.whatsapp_reminder), tint = Brand.Green) }
                             IconButton(onClick = { dialPhone(ctx, i.phone) }) { Icon(Icons.Filled.Call, stringResource(R.string.call), tint = Brand.Blue) }
                             if (!readOnly) IconButton(onClick = { promiseFor = e }) { Icon(Icons.Filled.EventAvailable, stringResource(R.string.add_promise), tint = Brand.Orange) }
                         }

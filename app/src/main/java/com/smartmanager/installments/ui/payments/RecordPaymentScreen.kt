@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.HorizontalDivider
@@ -203,7 +202,7 @@ fun RecordPaymentScreen(contractId: String?, customerId: String?, onBack: () -> 
                     OutlinedButton(onClick = {
                         val cu = vm.customer ?: return@OutlinedButton
                         remind(ReminderRequest(cu.id, cu.fullName, cu.phone, out.payment.contractId, ReminderType.PAYMENT_CONFIRMATION, out.payment.amountMinor, cur, out.payment.paidAt / 86_400_000L, vm.contract?.number ?: "", out.remainingOutstandingMinor, out.payment.receiptNumber))
-                    }, Modifier.weight(1f)) { androidx.compose.material3.Icon(Icons.Filled.Chat, null, tint = Brand.Green); Text(" WhatsApp") }
+                    }, Modifier.weight(1f)) { androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_whatsapp), null, tint = Brand.Green); Text(" WhatsApp") }
                 }
                 SecondaryButton(stringResource(R.string.done), { onDone(out.payment.id) })
                 return@ContentColumn

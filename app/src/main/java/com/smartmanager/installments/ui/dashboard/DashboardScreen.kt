@@ -25,7 +25,8 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
@@ -39,7 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +65,6 @@ import com.smartmanager.installments.ui.components.ContentColumn
 import com.smartmanager.installments.ui.components.EmptyState
 import com.smartmanager.installments.ui.components.LocalFmt
 import com.smartmanager.installments.ui.components.LocalReadOnly
-import com.smartmanager.installments.ui.components.LocalSettings
 import com.smartmanager.installments.ui.components.ReminderRequest
 import com.smartmanager.installments.ui.components.SMCard
 import com.smartmanager.installments.ui.components.SectionTitle
@@ -77,6 +81,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
+
+private val WhatsAppGreen = Color(0xFF1FAF5B)
+private val BrandOrangeText = Color(0xFFF58220)
 
 data class DashState(
     val today: LocalDate,
@@ -119,7 +126,6 @@ fun DashboardScreen(
     val vm = appVm { DashboardVm(it) }
     val s by vm.state.collectAsStateWithLifecycle()
     val fmt = LocalFmt.current
-    val settings = LocalSettings.current
     val readOnly = LocalReadOnly.current
     val remind = rememberReminderLauncher()
 
@@ -128,11 +134,12 @@ fun DashboardScreen(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenSettings) { Icon(Icons.Filled.Menu, stringResource(R.string.settings), tint = Brand.Navy) }
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.ic_logo), null, Modifier.size(44.dp))
-                Spacer(Modifier.size(8.dp))
+                Image(painterResource(R.drawable.ic_logo), null, Modifier.size(56.dp))
+                Spacer(Modifier.size(6.dp))
+                // Two-line wordmark as in the design: SmartManager (navy) over Installments (orange); not translated, it is the product name.
                 Column {
-                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall, color = Brand.Navy, maxLines = 1)
-                    if (settings.businessName.isNotBlank()) Text(settings.businessName, style = MaterialTheme.typography.bodySmall, color = Brand.Muted, maxLines = 1)
+                    Text("SmartManager", color = Brand.Navy, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, lineHeight = 22.sp)
+                    Text("Installments", color = BrandOrangeText, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, lineHeight = 22.sp)
                 }
             }
             val alerts = (s?.dueToday?.count ?: 0) + (s?.overdue?.count ?: 0)
@@ -170,7 +177,7 @@ fun DashboardScreen(
             // Summary cards: overdue and due-today first (what needs attention), then contracts and customers. 2x2 on phones, 4 across on tablets.
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val cards = listOf<@Composable (Modifier) -> Unit>(
-                    { m -> SummaryCard(m, stringResource(R.string.overdue), fmt.money(st.overdue.amountMinor, st.currency), stringResource(R.string.n_customers, st.overdue.count), Brand.Red, Brand.RedSoft, Icons.Filled.Warning, onOverdueList) },
+                    { m -> SummaryCard(m, stringResource(R.string.overdue), fmt.money(st.overdue.amountMinor, st.currency), stringResource(R.string.n_customers, st.overdue.count), Brand.Red, Brand.RedSoft, Icons.Filled.Error, onOverdueList, valueColor = Brand.Red) },
                     { m -> SummaryCard(m, stringResource(R.string.due_today), fmt.money(st.dueToday.amountMinor, st.currency), stringResource(R.string.n_customers, st.dueToday.count), Brand.Green, Brand.GreenSoft, Icons.Filled.CalendarMonth, onDueTodayList) },
                     { m -> SummaryCard(m, stringResource(R.string.active_contracts), st.activeContracts.toString(), stringResource(R.string.installment_plans), Brand.Purple, Brand.PurpleSoft, Icons.Filled.Description, onContractsList) },
                     { m -> SummaryCard(m, stringResource(R.string.total_customers), st.customers.toString(), stringResource(R.string.registered), Brand.Blue, Brand.BlueSoft, Icons.Filled.People, onCustomersList) },
@@ -197,7 +204,7 @@ fun DashboardScreen(
                             Modifier.fillMaxWidth().clickable { onOpenCustomer(r.customerId) }.padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Avatar(r.customerName)
+                            Avatar()
                             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                                 Text(r.customerName, style = MaterialTheme.typography.titleSmall, maxLines = 1)
                                 Text(fmt.money(r.overdueMinor, st.currency), color = Brand.Red, fontWeight = FontWeight.Bold)
@@ -206,8 +213,8 @@ fun DashboardScreen(
                             IconButton(onClick = {
                                 remind(ReminderRequest(r.customerId, r.customerName, r.phone, null, ReminderType.OVERDUE, r.overdueMinor, st.currency, r.oldestDueDate))
                             }) {
-                                Box(Modifier.size(40.dp).background(Brand.GreenSoft, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Filled.Chat, stringResource(R.string.whatsapp_reminder), tint = Brand.Green)
+                                Box(Modifier.size(40.dp).background(WhatsAppGreen, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                                    Icon(painterResource(R.drawable.ic_whatsapp), stringResource(R.string.whatsapp_reminder), tint = Color.White, modifier = Modifier.size(26.dp))
                                 }
                             }
                         }
@@ -218,10 +225,10 @@ fun DashboardScreen(
 
             // Quick actions: one row of four cards with a tinted icon each (orange = main call to action)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                QuickAction(Modifier.weight(1f), stringResource(R.string.add_customer), Icons.Filled.PersonAdd, Brand.Green, Brand.GreenSoft, !readOnly, onAddCustomer)
-                QuickAction(Modifier.weight(1f), stringResource(R.string.new_contract), Icons.Filled.Description, Brand.Blue, Brand.BlueSoft, !readOnly, onNewContract)
-                QuickAction(Modifier.weight(1f), stringResource(R.string.record_payment), Icons.Filled.AccountBalanceWallet, Brand.Orange, Brand.OrangeSoft, !readOnly, onRecordPayment)
-                QuickAction(Modifier.weight(1f), stringResource(R.string.send_reminder), Icons.Filled.Chat, Brand.Purple, Brand.PurpleSoft, true, onCollection)
+                QuickAction(Modifier.weight(1f), stringResource(R.string.add_customer), rememberVectorPainter(Icons.Filled.PersonAdd), Brand.Green, Brand.GreenSoft, !readOnly, onAddCustomer)
+                QuickAction(Modifier.weight(1f), stringResource(R.string.new_contract), rememberVectorPainter(Icons.Filled.Description), Brand.Blue, Brand.BlueSoft, !readOnly, onNewContract)
+                QuickAction(Modifier.weight(1f), stringResource(R.string.record_payment), rememberVectorPainter(Icons.Filled.AccountBalanceWallet), Brand.Orange, Brand.OrangeSoft, !readOnly, onRecordPayment)
+                QuickAction(Modifier.weight(1f), stringResource(R.string.send_reminder), painterResource(R.drawable.ic_whatsapp), Brand.Purple, Brand.PurpleSoft, true, onCollection)
             }
 
             // Upcoming payments
@@ -240,9 +247,9 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun Avatar(name: String) {
-    Box(Modifier.size(44.dp).background(Brand.BlueSoft, CircleShape), contentAlignment = Alignment.Center) {
-        Text(name.trim().take(1).uppercase(), color = Brand.Blue, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+private fun Avatar() {
+    Box(Modifier.size(44.dp).background(Color(0xFFE3E8F0), CircleShape), contentAlignment = Alignment.Center) {
+        Icon(Icons.Filled.Person, null, tint = Color(0xFF9AA7BC), modifier = Modifier.size(30.dp))
     }
 }
 
@@ -251,9 +258,7 @@ private fun UpcomingRow(r: InstallmentRow, today: LocalDate, onClick: () -> Unit
     val fmt = LocalFmt.current
     val status = InstallmentStatusCalculator.status(LocalDate.ofEpochDay(r.b.dueDate), r.b.amountMinor, r.b.paidMinor, today)
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(40.dp).background(Brand.BlueSoft, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-            Icon(Icons.Filled.CalendarMonth, null, tint = Brand.Blue, modifier = Modifier.size(22.dp))
-        }
+        Icon(Icons.Filled.CalendarMonth, null, tint = Color(0xFF7D8BA3), modifier = Modifier.size(30.dp))
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(r.customerName, style = MaterialTheme.typography.titleSmall, maxLines = 1)
             Text("${fmt.date(r.b.dueDate)} \u00B7 ${r.b.contractNumber}", style = MaterialTheme.typography.bodySmall, color = Brand.Muted)
@@ -281,23 +286,28 @@ fun StatusBadge(status: InstallmentStatus) {
 }
 
 @Composable
-private fun SummaryCard(m: Modifier, title: String, value: String, sub: String, color: Color, soft: Color, icon: ImageVector, onClick: () -> Unit) {
-    SMCard(m, onClick = onClick, container = soft.copy(alpha = 0.55f)) {
-        Column(Modifier.padding(14.dp)) {
-            // icon + title share the first line; the value gets the full card width so amounts with a currency symbol never clip
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(36.dp).background(Color.White, CircleShape), contentAlignment = Alignment.Center) { Icon(icon, null, tint = color, modifier = Modifier.size(20.dp)) }
-                Text(title, Modifier.weight(1f).padding(horizontal = 8.dp), style = MaterialTheme.typography.bodyMedium, color = Brand.Navy, fontWeight = FontWeight.SemiBold, maxLines = 1)
+private fun SummaryCard(m: Modifier, title: String, value: String, sub: String, color: Color, soft: Color, icon: ImageVector, onClick: () -> Unit, valueColor: Color = Brand.Navy) {
+    // One filled surface only (soft tinted gradient + hairline border); the icon is a tinted tile on that surface, not a second card.
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        m.clip(shape).background(Brush.linearGradient(listOf(Color.White, soft)), shape).border(1.dp, color.copy(alpha = 0.16f), shape)
+            .clickable(onClick = onClick).padding(14.dp),
+    ) {
+        // title + icon tile share the first line; the value gets the full card width so amounts with a currency symbol never clip
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(title, Modifier.weight(1f).padding(end = 8.dp), style = MaterialTheme.typography.bodyMedium, color = Brand.Navy, fontWeight = FontWeight.SemiBold, maxLines = 2)
+            Box(Modifier.size(44.dp).background(color.copy(alpha = 0.14f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = color, modifier = Modifier.size(26.dp))
             }
-            Spacer(Modifier.height(6.dp))
-            Text(value, style = MaterialTheme.typography.titleLarge, color = color, maxLines = 1, softWrap = false)
-            Text(sub, style = MaterialTheme.typography.bodySmall, color = Brand.Muted, maxLines = 1)
         }
+        Spacer(Modifier.height(4.dp))
+        Text(value, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = valueColor, maxLines = 1, softWrap = false)
+        Text(sub, style = MaterialTheme.typography.bodySmall, color = Brand.Muted, maxLines = 1)
     }
 }
 
 @Composable
-private fun QuickAction(m: Modifier, label: String, icon: ImageVector, color: Color, soft: Color, enabled: Boolean, onClick: () -> Unit) {
+private fun QuickAction(m: Modifier, label: String, icon: Painter, color: Color, soft: Color, enabled: Boolean, onClick: () -> Unit) {
     SMCard(m, onClick = if (enabled) onClick else null) {
         Column(Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(48.dp).background(if (enabled) soft else Color(0xFFEEF1F6), CircleShape), contentAlignment = Alignment.Center) {

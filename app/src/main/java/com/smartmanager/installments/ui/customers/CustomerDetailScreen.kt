@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.PictureAsPdf
@@ -150,7 +149,7 @@ fun CustomerDetailScreen(
                     val first = active.minByOrNull { it.b.dueDate }
                     val type = when { first == null -> ReminderType.UPCOMING; first.b.dueDate < p.today.toEpochDay() -> ReminderType.OVERDUE; first.b.dueDate == p.today.toEpochDay() -> ReminderType.DUE_TODAY; else -> ReminderType.UPCOMING }
                     remind(ReminderRequest(cu.id, cu.fullName, cu.phone, first?.b?.contractId, type, first?.b?.outstandingMinor ?: outstanding, cur, first?.b?.dueDate, first?.b?.contractNumber ?: "", outstanding))
-                }, modifier = Modifier.weight(1f)) { androidx.compose.material3.Icon(Icons.Filled.Chat, null, tint = Brand.Green); Text(" WhatsApp") }
+                }, modifier = Modifier.weight(1f)) { androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(R.drawable.ic_whatsapp), null, tint = Brand.Green); Text(" WhatsApp") }
             }
             if (!readOnly && cu.status == Status.ACTIVE) {
                 PrimaryButton(stringResource(R.string.new_contract), { onNewContract(id) }, icon = Icons.Filled.Description)
